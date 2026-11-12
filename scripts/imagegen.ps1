@@ -1,6 +1,6 @@
 ﻿param(
     [ValidateSet('Check', 'Generate')][string]$Action = 'Check',
-    [ValidateSet('coast', 'boat', 'boat-directions', 'coast-snow', 'coast-autumn', 'scene-space', 'scene-desert', 'object-meteorite', 'object-tornado', 'scene-space-miniature', 'scene-desert-miniature', 'scene-space-lined', 'scene-desert-lined', 'scene-space-pixel', 'scene-desert-pixel')][string]$Asset = 'boat',
+    [ValidateSet('coast', 'boat', 'boat-directions', 'coast-snow', 'coast-autumn', 'scene-space', 'scene-desert', 'object-meteorite', 'object-tornado', 'scene-space-miniature', 'scene-desert-miniature', 'scene-space-lined', 'scene-desert-lined', 'scene-space-pixel', 'scene-desert-pixel', 'scene-space-surface')][string]$Asset = 'boat',
     [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
@@ -72,6 +72,9 @@ try {
         Write-Output $text
     }
     if ($cliExitCode -ne 0) { throw '生图未完成；请根据上面的错误检查接口或参数。' }
+    if (-not (Test-Path -LiteralPath $outputPath) -or (Get-Item -LiteralPath $outputPath).Length -eq 0) {
+        throw '接口未返回有效图片，输出文件为空。请重试生成。'
+    }
 } finally {
     foreach ($name in $savedEnvironment.Keys) {
         [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], 'Process')

@@ -2,6 +2,8 @@
 
 三组静态概念图，包含同画风的示例陨石或旋风，用来比较视角、材质与融合效果。
 
+最新太空构图为「站在星球表面」：左侧与左下是近处岩石，地表向远方展开，右侧留出星空。已用于独立主界面里的「星球边境」预览。[最终背景](../anime/space-surface.webp)由 PP.dog `gpt-image-2.5` API 生成，实际尺寸 1672×941，[提示词](../../prompts/scene-space-surface.txt)随素材保存。原始 PNG 为 `output/imagegen/scene-space-surface.png`。
+
 运行 `npm run preview` 后，打开 http://127.0.0.1:4175/previews/style-exploration/ ，点击图片放大。
 
 | 风格 | 太空素材 | 沙漠素材 | 提示词 |
