@@ -18,4 +18,4 @@ http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': types[path.extname(file)], 'Cache-Control': 'no-cache' });
     res.end(data);
   } catch { res.writeHead(404).end('Not found'); }
-}).listen(4175, '127.0.0.1', () => console.log('海屿设计预览 http://127.0.0.1:4175/previews/interface/'));
+}).listen(4175, '127.0.0.1', () => console.log('WhereFile 设计预览 http://127.0.0.1:4175/previews/interface/'));

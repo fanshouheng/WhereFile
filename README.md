@@ -1,8 +1,10 @@
-# 海屿
+# 文件漂走了 · WhereFile
+
+*Let your files drift.*
 
 把桌面文件拖进海里，变成随波漂流的小船。一个轻量的 Windows 动态壁纸项目，文件与设置保存在本机。
 
-![海屿热带海湾桌面运行效果](docs/screenshots/haiyu-desktop.png)
+![WhereFile 热带海湾桌面运行效果](docs/screenshots/wherefile-desktop.png)
 
 ## 功能
 
@@ -25,7 +27,7 @@ npm start
 
 ## Windows 桌面版
 
-在 [Releases](https://github.com/fanshouheng/haiyu/releases/latest) 下载 Windows x64 免安装包，完整解压后运行 `海屿壁纸.exe`。
+在 [Releases](https://github.com/fanshouheng/WhereFile/releases/latest) 下载 Windows x64 免安装包，完整解压后运行 `WhereFile.exe`。
 
 需要 Windows 10/11 x64、.NET Framework 4.6.2+ 和 Microsoft Edge WebView2 Runtime。也可在项目目录自行构建：
 
@@ -33,7 +35,7 @@ npm start
 powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build.ps1
 ```
 
-运行 `output/desktop/海屿壁纸/海屿壁纸.exe`，在管理窗口点击“设为桌面壁纸”。也可以双击 `启动海屿壁纸.cmd`，首次启动会自动构建。构建后日常使用无需 Node.js、Python 或生图 API Key。
+运行 `output/desktop/WhereFile/WhereFile.exe`，在管理窗口点击“设为桌面壁纸”。也可以双击 `启动WhereFile壁纸.cmd`，首次启动会自动构建。构建后日常使用无需 Node.js、Python 或生图 API Key。
 
 ## 主界面设计预览
 

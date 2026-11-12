@@ -83,7 +83,7 @@ sealed class DesktopScanner : IDisposable
 {
     internal sealed class Snapshot { internal List<DesktopEntry> Entries;internal bool AutoArrange; }
     readonly BlockingCollection<TaskCompletionSource<Snapshot>> requests=new BlockingCollection<TaskCompletionSource<Snapshot>>();
-    internal DesktopScanner(){var thread=new Thread(Run){IsBackground=true,Name="Haiyu desktop scan"};thread.SetApartmentState(ApartmentState.STA);thread.Start();}
+    internal DesktopScanner(){var thread=new Thread(Run){IsBackground=true,Name="WhereFile desktop scan"};thread.SetApartmentState(ApartmentState.STA);thread.Start();}
     internal Task<Snapshot> Read(){var request=new TaskCompletionSource<Snapshot>();requests.Add(request);return request.Task;}
     void Run(){
         DesktopShell reader=null;

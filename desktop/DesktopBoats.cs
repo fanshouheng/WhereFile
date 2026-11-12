@@ -36,7 +36,7 @@ sealed class DesktopBoats : IDisposable
         var remaining=new List<DesktopEntry>();
         foreach(var entry in entries)if((File.Exists(entry.Path)||Directory.Exists(entry.Path))&&!view.Restore(entry))remaining.Add(entry);
         File.WriteAllText(Journal,Program.Json.Serialize(remaining));
-        if(remaining.Count>0)throw new IOException("部分桌面图标待恢复，请退出海屿后重试。");
+        if(remaining.Count>0)throw new IOException("部分桌面图标待恢复，请退出 WhereFile 后重试。");
     }
     void Save(){string temp=Journal+".tmp";File.WriteAllText(temp,Program.Json.Serialize(hidden.Values.ToArray()));if(File.Exists(Journal))File.Replace(temp,Journal,null);else File.Move(temp,Journal);}
     internal void SetMode(bool wallpaper)
@@ -74,7 +74,7 @@ sealed class DesktopBoats : IDisposable
                 }
             }
             previous=entries.ToDictionary(e=>e.Path,StringComparer.OrdinalIgnoreCase);
-        }catch(Exception e){if(!disposed){Program.Log("Desktop polling stopped: "+e.Message);active=false;notice("桌面连接已变化，请退出海屿再启动以恢复图标。");}}
+        }catch(Exception e){if(!disposed){Program.Log("Desktop polling stopped: "+e.Message);active=false;notice("桌面连接已变化，请退出 WhereFile 再启动以恢复图标。");}}
         finally{scanning=false;}
     }
     internal void Message(Dictionary<string,object> data,string type)
@@ -101,7 +101,7 @@ sealed class DesktopBoats : IDisposable
                 try{Process.Start(new ProcessStartInfo(entry.Path){UseShellExecute=true});}catch{notice("文件已移动或暂时无法打开，原图标仍可恢复。");}
             }else if(type=="desktop-restore"){
                 if(shell.Restore(entry)){hidden.Remove(entry.Path);Save();BoatWindow boat;if(boats.TryGetValue(id,out boat)){boats.Remove(id);boat.Dispose();}window.Post(new{type="desktop-removed",id=id});previous.Clear();}
-                else notice("暂时无法恢复图标，请退出后重新启动海屿重试。");
+                else notice("暂时无法恢复图标，请退出后重新启动 WhereFile 重试。");
             }
         }
     }

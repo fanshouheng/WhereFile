@@ -14,6 +14,7 @@ using Microsoft.Win32;
 
 static class Program
 {
+    // Keep the legacy profile and instance identity so upgrades retain data and icon recovery.
     internal static readonly string DataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HaiyuWallpaper");
     internal static readonly JavaScriptSerializer Json = new JavaScriptSerializer();
     internal const string EventPrefix = "Local\\HaiyuWallpaper.";
@@ -63,7 +64,7 @@ static class Program
             catch (Exception error)
             {
                 Log(error.ToString());
-                MessageBox.Show("海屿未能启动。请查看本机日志：\n" + Path.Combine(DataDirectory, "host.log") + "\n\n" + error.Message, "海屿壁纸", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("WhereFile 未能启动。请查看本机日志：\n" + Path.Combine(DataDirectory, "host.log") + "\n\n" + error.Message, "文件漂走了 · WhereFile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
@@ -106,8 +107,8 @@ sealed class WallpaperContext : ApplicationContext
         pauseItem = new ToolStripMenuItem("暂停漂流", null, delegate { SetPaused(!userPaused); });
         menu.Items.Add(pauseItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("退出海屿", null, delegate { Quit(); });
-        tray = new NotifyIcon { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath), Text = "海屿壁纸 · 双击管理小船", ContextMenuStrip = menu, Visible = true };
+        menu.Items.Add("退出 WhereFile", null, delegate { Quit(); });
+        tray = new NotifyIcon { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath), Text = "文件漂走了 · WhereFile · 双击管理小船", ContextMenuStrip = menu, Visible = true };
         tray.DoubleClick += delegate { Manage(); };
         SystemEvents.SessionSwitch += SessionChanged;
         SystemEvents.DisplaySettingsChanged += DisplayChanged;
@@ -264,7 +265,7 @@ sealed class IslandWindow : Form
     {
         owner = context;
         startWallpaper = wallpaper;
-        Text = "海屿壁纸 · 管理小船";
+        Text = "文件漂走了 · WhereFile · 管理小船";
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         StartPosition = FormStartPosition.CenterScreen;
         Size = new Size(1100, 760);
@@ -281,7 +282,7 @@ sealed class IslandWindow : Form
         try
         {
             string www = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "www");
-            if (!File.Exists(Path.Combine(www, "index.html"))) throw new FileNotFoundException("缺少 www 页面资源，请完整解压海屿壁纸。 ");
+            if (!File.Exists(Path.Combine(www, "index.html"))) throw new FileNotFoundException("缺少 www 页面资源，请完整解压 WhereFile。 ");
             var options = new CoreWebView2EnvironmentOptions("--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows");
             var environment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Program.DataDirectory, "WebView2"), options);
             await view.EnsureCoreWebView2Async(environment);
@@ -319,7 +320,7 @@ sealed class IslandWindow : Form
             errorMessage = error.Message;
             Program.Log(error.ToString());
             WriteStatus();
-            MessageBox.Show(this, "海屿未能加载。请确认已安装 Microsoft Edge WebView2 Runtime，并完整解压软件。\n\n" + error.Message, "海屿壁纸", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(this, "WhereFile 未能加载。请确认已安装 Microsoft Edge WebView2 Runtime，并完整解压软件。\n\n" + error.Message, "文件漂走了 · WhereFile", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
