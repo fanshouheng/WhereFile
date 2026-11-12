@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>海屿 · 风格对照</title>
+  <style>
+    :root{--paper:#fff;--ink:#25313a;--muted:#68747c;--line:#dce2e5;--focus:#396579;--image-bg:#f4f6f7}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.7 "Microsoft YaHei UI","Microsoft YaHei",sans-serif}
+    body.modal-open{overflow:hidden}
+    main{max-width:1680px;margin:auto;padding:48px 40px 64px}
+    header{display:flex;align-items:flex-start;justify-content:space-between;gap:28px;margin-bottom:48px}
+    h1{font-size:30px;line-height:1.4;font-weight:600;letter-spacing:.5px;margin:0 0 12px}
+    header p{max-width:62ch;margin:0;color:var(--muted)}
+    a{color:var(--focus);text-underline-offset:4px}
+    header a{white-space:nowrap;margin-top:10px;font-size:13px}
+    section+section{margin-top:42px;padding-top:36px;border-top:1px solid var(--line)}
+    h2{font-size:21px;font-weight:600;line-height:1.5;margin:0 0 6px}
+    .description{margin:0 0 20px;color:var(--muted);font-size:13px}
+    .pair{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    figure{margin:0;min-width:0}
+    .image-button{display:block;width:100%;padding:0;border:0;border-radius:6px;overflow:hidden;background:var(--image-bg);cursor:zoom-in}
+    .image-button img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
+    .pixel img{image-rendering:pixelated}
+    figcaption{margin-top:9px;font-size:13px}
+    button,a{-webkit-tap-highlight-color:transparent}
+    button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:5px}
+    dialog{width:min(96vw,1920px);max-width:none;max-height:94vh;margin:auto;padding:0;border:0;border-radius:7px;background:#10151a;color:white;overflow:auto}
+    dialog::backdrop{background:#111820d9}
+    .viewer-image{display:block;width:100%;max-height:calc(94vh - 64px);object-fit:contain;background:#10151a}
+    .viewer-footer{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px 20px}
+    .viewer-footer span{font-size:13px}
+    .close-button{padding:7px 13px;border:1px solid #ffffff70;border-radius:4px;color:white;background:transparent;font:inherit;font-size:13px;cursor:pointer}
+    .close-button:focus-visible{outline-color:white;outline-offset:3px}
+    @media(max-width:900px){main{padding:32px 24px 48px}.pair{gap:16px}header{margin-bottom:36px}}
+    @media(max-width:600px){main{padding:28px 16px 40px}header{display:block;margin-bottom:32px}header a{display:inline-block;margin-top:18px}h1{font-size:27px}h2{font-size:20px}.pair{grid-template-columns:1fr;gap:20px}section+section{margin-top:32px;padding-top:28px}.description{margin-bottom:16px}.viewer-footer{padding:10px 14px}}
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>风格对照</h1>
+        <p>太空与沙漠，各试三种画法。以下是 6 张静态概念图，尚未接入应用；点击图片可放大查看。</p>
+      </div>
+      <a href="../interface/">返回主界面预览</a>
+    </header>
+
+    <section aria-labelledby="miniature-title">
+      <h2 id="miniature-title">微缩漫游</h2>
+      <p class="description">斜俯视与柔和哑光材质，物件更有体积，整体像可以游逛的小世界。</p>
+      <div class="pair">
+        <figure>
+          <button class="image-button" data-title="微缩漫游 · 太空" aria-label="放大微缩漫游风格的太空场景">
+            <img src="assets/space-miniature.webp" alt="微缩漫游风格的太空与陨石" width="1600" height="900">
+          </button>
+          <figcaption>太空</figcaption>
+        </figure>
+        <figure>
+          <button class="image-button" data-title="微缩漫游 · 沙漠" aria-label="放大微缩漫游风格的沙漠场景">
+            <img src="assets/desert-miniature.webp" alt="微缩漫游风格的沙漠与小龙卷风" width="1600" height="900">
+          </button>
+          <figcaption>沙漠</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="lined-title">
+      <h2 id="lined-title">线绘游戏地图</h2>
+      <p class="description">高俯视、清楚轮廓与简洁色块，地形容易辨认，也能留出开阔的活动区域。</p>
+      <div class="pair">
+        <figure>
+          <button class="image-button" data-title="线绘游戏地图 · 太空" aria-label="放大线绘游戏地图风格的太空场景">
+            <img src="assets/space-lined.webp" alt="线绘游戏地图风格的太空与陨石" width="1600" height="900" loading="lazy">
+          </button>
+          <figcaption>太空</figcaption>
+        </figure>
+        <figure>
+          <button class="image-button" data-title="线绘游戏地图 · 沙漠" aria-label="放大线绘游戏地图风格的沙漠场景">
+            <img src="assets/desert-lined.webp" alt="线绘游戏地图风格的沙漠与小龙卷风" width="1600" height="900" loading="lazy">
+          </button>
+          <figcaption>沙漠</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="pixel-title">
+      <h2 id="pixel-title">精细像素地图</h2>
+      <p class="description">俯视像素场景，用有限颜色与明确轮廓区分物件，细节更有游戏感。</p>
+      <div class="pair">
+        <figure>
+          <button class="image-button pixel" data-title="精细像素地图 · 太空" aria-label="放大精细像素地图风格的太空场景">
+            <img src="assets/space-pixel.webp" alt="精细像素地图风格的太空与陨石" width="1600" height="900" loading="lazy">
+          </button>
+          <figcaption>太空</figcaption>
+        </figure>
+        <figure>
+          <button class="image-button pixel" data-title="精细像素地图 · 沙漠" aria-label="放大精细像素地图风格的沙漠场景">
+            <img src="assets/desert-pixel.webp" alt="精细像素地图风格的沙漠与小龙卷风" width="1600" height="900" loading="lazy">
+          </button>
+          <figcaption>沙漠</figcaption>
+        </figure>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="viewer" aria-labelledby="viewer-title">
+    <div>
+      <img class="viewer-image" id="viewer-image" alt="">
+      <div class="viewer-footer">
+        <span id="viewer-title"></span>
+        <button class="close-button" id="close-viewer" autofocus>关闭</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    const viewer = document.getElementById('viewer');
+    const viewerImage = document.getElementById('viewer-image');
+    document.querySelectorAll('.image-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const image = button.querySelector('img');
+        viewerImage.src = image.src;
+        viewerImage.alt = image.alt;
+        viewer.classList.toggle('pixel', button.classList.contains('pixel'));
+        document.getElementById('viewer-title').textContent = button.dataset.title;
+        document.body.classList.add('modal-open');
+        viewer.showModal();
+      });
+    });
+    document.getElementById('close-viewer').addEventListener('click', () => viewer.close());
+    viewer.addEventListener('click', event => {
+      if (event.target === viewer) viewer.close();
+    });
+    viewer.addEventListener('close', () => document.body.classList.remove('modal-open'));
+  </script>
+</body>
+</html>

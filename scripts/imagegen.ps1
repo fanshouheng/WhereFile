@@ -1,6 +1,6 @@
 ﻿param(
     [ValidateSet('Check', 'Generate')][string]$Action = 'Check',
-    [ValidateSet('coast', 'boat', 'boat-directions', 'coast-snow', 'coast-autumn', 'scene-space', 'scene-desert', 'object-meteorite', 'object-tornado')][string]$Asset = 'boat',
+    [ValidateSet('coast', 'boat', 'boat-directions', 'coast-snow', 'coast-autumn', 'scene-space', 'scene-desert', 'object-meteorite', 'object-tornado', 'scene-space-miniature', 'scene-desert-miniature', 'scene-space-lined', 'scene-desert-lined', 'scene-space-pixel', 'scene-desert-pixel')][string]$Asset = 'boat',
     [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
