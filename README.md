@@ -23,7 +23,9 @@ npm start
 
 ## Windows 桌面版
 
-需要 Windows 10/11 x64、.NET Framework 4.6.2+ 和 Microsoft Edge WebView2 Runtime。在项目目录构建：
+在 [Releases](https://github.com/fanshouheng/haiyu/releases/latest) 下载 Windows x64 免安装包，完整解压后运行 `海屿壁纸.exe`。
+
+需要 Windows 10/11 x64、.NET Framework 4.6.2+ 和 Microsoft Edge WebView2 Runtime。也可在项目目录自行构建：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build.ps1
