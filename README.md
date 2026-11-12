@@ -2,7 +2,7 @@
 
 把桌面文件拖进海里，变成随波漂流的小船。一个轻量的 Windows 动态壁纸项目，文件与设置保存在本机。
 
-![海屿热带海湾运行效果（网页演示）](docs/screenshots/haiyu-tropical.jpg)
+![海屿热带海湾桌面运行效果](docs/screenshots/haiyu-desktop.png)
 
 ## 功能
 
