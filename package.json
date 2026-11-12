@@ -1,0 +1,7 @@
+{
+  "name": "tidal-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.mjs", "preview": "node scripts/preview.mjs", "check": "node --check app.js && node --check ocean.js && node --check voyage.js && node --check server.mjs && node --check scripts/preview.mjs" }
+}

@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: one crisp standalone sailboat sprite for a cozy hand-painted island desktop, square canvas.
+Primary request: a single small wooden sailboat viewed from high overhead at a slight tilt, bow pointing diagonally toward the lower right. The entire boat and sail are visible, centered, filling about 80 percent of the canvas with comfortable clear margins.
+Style/medium: polished cozy game illustration, finely painted materials, clean defined edges and a strong readable silhouette at small display sizes. Match warm cream sand and turquoise sea environments. Not photorealistic, not low-poly, no thick black outlines, no blur.
+Subject/materials: honey-colored wooden hull, distinct gunwales and small deck, one ivory triangular sail, subtle pale blue accents. Simple coherent rigging, solid opaque sail, restrained shading. Leave a clean blank area on the sail for a file icon added later by software.
+Lighting/mood: warm daylight from upper left, subtle dimensional shading contained within the boat.
+Scene/backdrop: perfectly flat uniform saturated magenta (#FF00FF), edge to edge. This is a temporary chroma-key background for a local cutout. Absolutely no magenta or pink anywhere on the boat itself. No background gradients, texture, spill, reflected magenta or cast shadows. Do not simulate transparency with a checkerboard.
+Constraints: exactly one complete boat, no cropped mast or rigging. Opaque, clearly separated shape with clean antialiased contour. Sail and hull should remain easy to identify when reduced to about 100 pixels.
+Avoid: water, waves, wake, sea foam, reflections, ground, cast shadow, people, birds, text, logos, file icons, UI, multiple views, sprite sheet, extra boats, depth-of-field blur.

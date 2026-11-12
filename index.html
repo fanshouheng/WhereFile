@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#20baca">
+  <title>海屿 · 让文件漂一会儿</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E⛵%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="island" aria-label="海岛桌面，拖动文件到海上变成小船">
+    <img class="scene-fallback" src="assets/coast-hd.webp" alt="阳光下的沙滩与碧蓝海湾" draggable="false">
+    <canvas id="ocean" aria-hidden="true" hidden></canvas>
+    <canvas id="life" aria-hidden="true"></canvas>
+    <div id="files" aria-label="岛上的文件"></div>
+    <div class="shore-hint" id="shore-hint">放在沙滩上</div>
+    <div class="drop-overlay" id="drop-overlay"><span>松手，让文件出海</span></div>
+  </main>
+
+  <header>
+    <div class="identity"><h1>海屿<span class="identity-dot">.</span></h1><span id="scene-status">风很轻，海很慢。</span></div>
+    <nav class="top-actions" aria-label="场景控制">
+      <button class="wallpaper-button" id="set-wallpaper" hidden>设为桌面壁纸</button>
+      <button class="wallpaper-button" id="choose-wallpaper">换壁纸</button>
+      <button class="icon-button" id="sound" aria-label="开启海浪声" title="海浪声" aria-pressed="false"></button>
+      <button class="icon-button" id="pause" aria-label="暂停漂流" title="暂停漂流" aria-pressed="false"></button>
+      <button class="icon-button" id="fullscreen" aria-label="全屏" title="全屏"></button>
+    </nav>
+  </header>
+
+  <div class="first-hint" id="first-hint"><span class="hint-wave">≈</span><span>把沙滩上的文件，拖进海里。</span><button id="dismiss-hint" aria-label="关闭提示">×</button></div>
+
+  <footer>
+    <div class="dock" aria-label="文件工具">
+      <button id="add-file"><span data-icon="plus"></span><span>放入文件</span></button>
+      <span class="dock-divider"></span>
+      <button id="find-file"><span data-icon="search"></span><span>找文件</span></button>
+      <button id="recall"><span data-icon="anchor"></span><span>全部靠岸</span></button>
+      <span class="dock-divider"></span>
+      <button class="icon-button" id="tide-settings" aria-label="调整海风" aria-expanded="false" title="调整海风"><span data-icon="wind"></span></button>
+    </div>
+    <span class="local-note">只在这片海里，不会上传文件</span>
+  </footer>
+
+  <section class="wind-panel glass" id="wind-panel" hidden aria-label="海风设置">
+    <div class="panel-heading"><span>今天的海风</span><span id="wind-label">轻柔</span></div>
+    <input type="range" id="wind" min="0" max="100" value="35" aria-label="海风强度">
+    <div class="range-labels"><span>平静</span><span>轻快</span></div>
+  </section>
+
+  <dialog id="search-dialog" class="glass search-dialog">
+    <div class="search-row"><span data-icon="search"></span><input id="search-input" type="search" placeholder="文件漂到哪儿了？" aria-label="搜索文件" autocomplete="off"><button class="close-button" id="close-search" aria-label="关闭搜索">×</button></div>
+    <ul id="search-results"></ul>
+    <p class="search-tip">选择文件，让它亮起来。</p>
+  </dialog>
+
+  <dialog id="wallpaper-dialog" class="glass wallpaper-dialog">
+    <div class="preview-heading"><span>换一片风景</span><button class="close-button" id="close-wallpaper" aria-label="关闭壁纸选择">×</button></div>
+    <div id="wallpaper-options" class="wallpaper-options"></div>
+  </dialog>
+
+  <dialog id="preview-dialog" class="glass preview-dialog">
+    <div class="preview-heading"><span id="preview-title"></span><button class="close-button" id="close-preview" aria-label="关闭预览">×</button></div>
+    <div id="preview-content"></div>
+    <div class="preview-actions"><button id="download-file">保存副本</button><button id="remove-file">移出海岛</button></div>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <input id="file-input" type="file" multiple hidden>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
