@@ -25,7 +25,8 @@
 - Wrangler 4.161.0 的 Pages 本地运行确认两组响应头规则有效，EXE 返回附件下载；缺失页面和私有路径为 404，同样通过完整安装包下载哈希验证。
 - Wrangler OAuth 已认证，2026-11-13 通过 Direct Upload 部署到 Cloudflare Pages 项目 `wherefile`，生产地址为 [https://wherefile-865.pages.dev/](https://wherefile-865.pages.dev/)。生产分支为 `master`，源码提交为 `df6b738`，部署 ID 为 `1289ce93-4cbd-49c3-a0fa-f8b8386e67fe`。
 - 公网生产地址通过相同的 Playwright / Edge 布局及交互检查，覆盖 1440、768、390、320 像素宽度，图片全部加载，无页面错误。截图在 `output/playwright/wherefile-live-*-full.png`。浏览器真实点击下载的 EXE 大小和 SHA256 与上述本地安装包一致；独立 HTTP 下载、HEAD、附件及安全响应头、缺失路径与 `/.local/` 返回 404 的检查也通过，证据在 `output/live-verification/`。
-- 自定义域名尚未提供，绑定仍为 `pending`；现有 `pages.dev` 地址可直接访问及下载安装包。GitHub 源码提交与 0.1.3 Release 上传不属于本次官网部署。
+- 官网新增六套静态主题预览，沿用设计稿的专属物件，统一标注“尚未上线”；图片压缩为 WebP，合计约 659 KiB。未将这些主题加入安装包，本地 1440、768、390、320 像素宽度检查及六张图片加载通过。
+- `wherefile.soul.中国`（ASCII：`wherefile.soul.xn--fiqs8s`）已关联到 Pages。域名 DNS 由阿里云管理，需添加 `wherefile` 的 CNAME，目标为 `wherefile-865.pages.dev`；DNS 和 HTTPS 验证仍为 `pending`。现有 `pages.dev` 地址可直接访问及下载安装包。GitHub 源码提交与 0.1.3 Release 上传不属于本次官网部署。
 
 ## 2026-11-13 “设为桌面壁纸”无反馈排查
 
