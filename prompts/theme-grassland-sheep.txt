@@ -1,0 +1,6 @@
+Use case: stylized-concept
+Asset type: single isolated small sheep sprite for an interactive 青青草原 cartoon desktop theme.
+Primary request: one adorable little white-wool sheep from the visual world of Pleasant Goat and Big Big Wolf (喜羊羊与灰太狼), with a round fluffy fleece, small warm beige face, two small curved brown horns, short four legs and tiny hooves. Neutral everyday little sheep, no clothes, no crown, no signature character accessories. Full body in an elevated three-quarter side view, facing screen right, standing on all four legs and ready to stroll. Friendly readable silhouette at 80 pixels.
+Style: clean Chinese 2D television animation with confident fine outlines, simple graphic shapes and two-tone cel shadows, warm sunny light matching a vivid green cartoon meadow. One object only, large and centered in a square frame, generous margin, uncropped feet and horns.
+Background: perfectly uniform pure chroma green #00ff00 with no texture or gradient. No green anywhere on the sheep, no green reflections, no grass, no ground, no external cast shadow.
+Avoid: extra sheep, wolves, buildings, scenery, running motion streaks, words, UI, file icons, collage, sprite sheet, checkerboard background, 3D rendering, photorealism, heavy realistic fur texture.

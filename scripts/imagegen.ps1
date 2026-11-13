@@ -1,6 +1,6 @@
 ﻿param(
     [ValidateSet('Check', 'Generate')][string]$Action = 'Check',
-    [ValidateSet('coast', 'boat', 'boat-directions', 'coast-snow', 'coast-autumn', 'scene-space', 'scene-desert', 'object-meteorite', 'object-tornado', 'scene-space-miniature', 'scene-desert-miniature', 'scene-space-lined', 'scene-desert-lined', 'scene-space-pixel', 'scene-desert-pixel', 'scene-space-surface')][string]$Asset = 'boat',
+    [ValidateSet('coast', 'boat', 'boat-directions', 'coast-snow', 'coast-autumn', 'scene-space', 'scene-desert', 'object-meteorite', 'object-tornado', 'scene-space-miniature', 'scene-desert-miniature', 'scene-space-lined', 'scene-desert-lined', 'scene-space-pixel', 'scene-desert-pixel', 'scene-space-surface', 'theme-grassland-background', 'theme-grassland-wolfcastle', 'theme-grassland-sheep')][string]$Asset = 'boat',
     [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
@@ -51,10 +51,10 @@ try {
     }
 
     if (-not (Test-Path -LiteralPath $cliPath)) { throw '未找到 Codex imagegen 技能脚本。' }
-    $size = if ($Asset -like 'scene-*') { 'auto' } elseif ($Asset -in @('boat-directions', 'coast-snow', 'coast-autumn')) { '1536x1024' } elseif ($Asset -like 'coast*') { 'auto' } else { '1024x1024' }
+    $size = if ($Asset -like 'scene-*' -or $Asset -in @('theme-grassland-background', 'theme-grassland-wolfcastle')) { 'auto' } elseif ($Asset -in @('boat-directions', 'coast-snow', 'coast-autumn')) { '1536x1024' } elseif ($Asset -like 'coast*') { 'auto' } else { '1024x1024' }
     $promptPath = Join-Path $islandRoot "prompts/$Asset.txt"
     $outputPath = Join-Path $islandRoot "output/imagegen/$Asset.png"
-    if (Test-Path -LiteralPath $outputPath) { throw "已有素材：$outputPath。请先另存或改名再生成。" }
+    if (-not $DryRun -and (Test-Path -LiteralPath $outputPath)) { throw "已有素材：$outputPath。请先另存或改名再生成。" }
     $cliArguments = @('-X', 'utf8', $cliPath, 'generate', '--model', $model,
         '--prompt-file', $promptPath, '--size', $size, '--quality', 'high',
         '--output-format', 'png', '--no-augment', '--out', $outputPath)
@@ -72,6 +72,7 @@ try {
         Write-Output $text
     }
     if ($cliExitCode -ne 0) { throw '生图未完成；请根据上面的错误检查接口或参数。' }
+    if ($DryRun) { return }
     if (-not (Test-Path -LiteralPath $outputPath) -or (Get-Item -LiteralPath $outputPath).Length -eq 0) {
         throw '接口未返回有效图片，输出文件为空。请重试生成。'
     }

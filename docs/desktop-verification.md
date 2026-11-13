@@ -1,5 +1,12 @@
 # WhereFile 桌面版验证
 
+## 2026-11-14 青青草原 · 狼堡独立预览
+
+- 新增 `previews/grassland/`，通过 `npm run preview` 的 `/previews/grassland/` 访问。背景、狼堡与小羊使用本次实际生成素材，物件已抠为透明 PNG 并检查浅色、深色底边缘。
+- Edge 实测文件夹拖出变同名小羊、双击查看文件、拖回收纳、无效落点与 Esc 取消、键盘拿起/移动/放下，以及漫游、暂停和减少动态偏好通过。1920、1440、796、761、760、390、320 像素宽度无横向溢出，小羊与名称未越出场景，无页面错误。
+- 带目录相对路径的 FileList 验证了嵌套文件、长目录名、HTML 纯文本展示、图片预览、下载副本与收回；下载二进制与测试内容一致。Playwright 原生目录上传在 Edge 中超时，真实目录选择器未完成验收，未以数据注入替代此结论。
+- `node --check previews/grassland/grassland.js`、`npm run check`、生图脚本 DryRun 通过。最终截图在 `output/playwright/grassland/final-desktop.png` 与 `final-mobile.png`。本次未运行桌面宿主、操作桌面图标、构建安装包或部署官网；这是独立主题交互验证。
+
 ## 2026-11-13 状态核对
 
 - GitHub 最新正式版为 [v0.1.2](https://github.com/fanshouheng/WhereFile/releases/tag/v0.1.2)，标签与远端 `master` 均指向 `f92bc16`。发布包尚未包含本地 `4970a56` 的按钮反馈及 Windows 11 层级修复；该修复提交尚未推送。

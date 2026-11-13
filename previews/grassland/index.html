@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f7ed">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./grassland.css">
+  <title>青青草原 · 狼堡 — WhereFile 主题预览</title>
+  <script src="./grassland.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="page-title"><a class="wordmark" href="../interface/" aria-label="返回 WhereFile 主题预览">WhereFile</a><span class="title-divider" aria-hidden="true"></span><h1>青青草原 · 狼堡</h1></div>
+    <div class="toolbar"><button id="motion-toggle" type="button" aria-pressed="false">暂停</button><button id="add-folder" class="primary" type="button">添加文件夹</button></div>
+  </header>
+  <main>
+    <section id="scene" class="scene" aria-label="青青草原与狼堡互动预览">
+      <img class="scene-background" src="./assets/grassland.webp" alt="阳光下的青青草原，远处有连绵的山丘和白云" width="1672" height="941">
+      <div class="cloud-shadow" aria-hidden="true"></div>
+      <button id="castle" class="castle" type="button" aria-label="打开狼堡里的文件夹" aria-expanded="false" aria-controls="storage-panel">
+        <img src="./assets/wolfcastle.png" alt="" width="512" height="512" draggable="false">
+        <span class="castle-label">狼堡 <span id="castle-count" class="castle-count">3</span></span>
+      </button>
+      <div id="pasture" class="pasture" aria-label="草原上的小羊"></div>
+      <aside id="storage-panel" class="storage-panel" aria-labelledby="storage-title" hidden>
+        <div class="panel-heading"><h2 id="storage-title">狼堡</h2><button id="close-storage" type="button" aria-label="关闭狼堡">×</button></div>
+        <div id="folder-list" class="folder-list"></div>
+        <p class="storage-hint">拖到草原，就变成一只小羊。</p>
+      </aside>
+      <p id="scene-hint" class="scene-hint">打开狼堡，让文件夹出来走走。</p>
+      <span class="preview-mark">主题预览</span>
+    </section>
+    <div class="below-scene"><span>双击小羊打开文件夹，拖回狼堡即可收纳。</span><span>预览不会移动或改写原文件。</span></div>
+    <p id="status" class="sr-only" role="status" aria-live="polite"></p>
+  </main>
+  <input id="folder-input" type="file" webkitdirectory multiple hidden>
+  <dialog id="folder-dialog" class="folder-dialog">
+    <div class="dialog-heading"><div><h2 id="folder-title">文件夹</h2><p id="folder-meta"></p></div><button id="close-folder" type="button" aria-label="关闭文件夹">×</button></div>
+    <div class="folder-workspace"><div id="file-list" class="file-list" aria-label="文件列表"></div><section id="file-preview" class="file-preview" aria-label="文件预览"></section></div>
+    <div class="dialog-footer"><button id="return-to-castle" type="button">收回狼堡</button><span>文件留在原处。</span></div>
+  </dialog>
+</body>
+</html>
