@@ -28,7 +28,7 @@ npm start
 
 ## Windows 桌面版
 
-在 [官网](https://wherefile-865.pages.dev/) 下载 0.1.3 Windows x64 单文件安装包，双击 EXE 安装即可。[GitHub Releases](https://github.com/fanshouheng/WhereFile/releases/latest) 目前仍提供 0.1.2 免安装包。
+在 [官网](https://wherefile.soul.中国/) 下载 0.1.3 Windows x64 单文件安装包，双击 EXE 安装即可。[GitHub Releases](https://github.com/fanshouheng/WhereFile/releases/latest) 目前仍提供 0.1.2 免安装包。
 
 需要 Windows 10/11 x64、.NET Framework 4.6.2+ 和 Microsoft Edge WebView2 Runtime。也可在项目目录自行构建：
 
@@ -62,7 +62,7 @@ npm run site
 
 Cloudflare Pages 项目为 `wherefile`，配置在 `wrangler.jsonc`。更新时先构建安装包和官网，再执行 `npx wrangler@4.161.0 pages deploy output/site --project-name wherefile --branch master` 上传完整目录。这不是 Git 自动构建：安装包在本地生成，不在仓库中，云端只运行 `npm run site:build` 会缺少安装包而失败。也可以设置 `WHEREFILE_DOWNLOAD_URL` 为已发布的 HTTPS 下载地址后构建；外部文件的大小、哈希与可用性不会冒充已验证。
 
-官网已于 2026-11-13 部署至 [https://wherefile-865.pages.dev/](https://wherefile-865.pages.dev/)。公网桌面及手机布局、互动与真实安装包下载已验证，下载 SHA256 与本地安装包一致。`wherefile.soul.中国` 已关联到 Pages，待阿里云 DNS 添加 CNAME 后完成域名及 HTTPS 验证。详细证据见 [桌面验证记录](docs/desktop-verification.md)。
+官网已于 2026-11-13 上线至 [https://wherefile.soul.中国/](https://wherefile.soul.中国/)，备用地址为 [https://wherefile-865.pages.dev/](https://wherefile-865.pages.dev/)。自定义域名的 DNS 和 HTTPS 已激活；公网桌面及手机布局、六套主题预览和真实安装包下载已验证，下载 SHA256 与本地安装包一致。详细证据见 [桌面验证记录](docs/desktop-verification.md)。
 
 ## 主界面设计预览
 

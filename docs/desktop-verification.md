@@ -23,10 +23,10 @@
 - Playwright / Edge 验证了 1440、768、390、320 像素宽度无横向溢出，以及三景切换、暂停/播放、键盘与拖动变船、FAQ、减少动态偏好和图片加载；无页面错误。截图在 `output/playwright/wherefile-site-*-full.png`。
 - 从页面实际下载的 0.1.3 EXE 大小为 6,191,283 字节，SHA256 为 `47ce1e2035b7b5913daf7755eb134b2fde32908862d73aac3d66e593c9a9cf2a`，与原安装包逐字节一致。`npm run site:verify` 另验证下载、HEAD、路径隔离和错误方法处理。
 - Wrangler 4.161.0 的 Pages 本地运行确认两组响应头规则有效，EXE 返回附件下载；缺失页面和私有路径为 404，同样通过完整安装包下载哈希验证。
-- Wrangler OAuth 已认证，2026-11-13 通过 Direct Upload 部署到 Cloudflare Pages 项目 `wherefile`，生产地址为 [https://wherefile-865.pages.dev/](https://wherefile-865.pages.dev/)。生产分支为 `master`，源码提交为 `df6b738`，部署 ID 为 `1289ce93-4cbd-49c3-a0fa-f8b8386e67fe`。
+- Wrangler OAuth 已认证，2026-11-13 通过 Direct Upload 部署到 Cloudflare Pages 项目 `wherefile`，官网为 [https://wherefile.soul.中国/](https://wherefile.soul.中国/)，备用地址为 [https://wherefile-865.pages.dev/](https://wherefile-865.pages.dev/)。生产分支为 `master`，当前官网源码提交为 `7390806`，部署 ID 为 `b9aed4a2-ff29-4b26-b3e5-e4e4b7c87f7d`。
 - 公网生产地址通过相同的 Playwright / Edge 布局及交互检查，覆盖 1440、768、390、320 像素宽度，图片全部加载，无页面错误。截图在 `output/playwright/wherefile-live-*-full.png`。浏览器真实点击下载的 EXE 大小和 SHA256 与上述本地安装包一致；独立 HTTP 下载、HEAD、附件及安全响应头、缺失路径与 `/.local/` 返回 404 的检查也通过，证据在 `output/live-verification/`。
-- 官网新增六套静态主题预览，沿用设计稿的专属物件，统一标注“尚未上线”；图片压缩为 WebP，合计约 659 KiB。未将这些主题加入安装包，本地 1440、768、390、320 像素宽度检查及六张图片加载通过。
-- `wherefile.soul.中国`（ASCII：`wherefile.soul.xn--fiqs8s`）已关联到 Pages。域名 DNS 由阿里云管理，需添加 `wherefile` 的 CNAME，目标为 `wherefile-865.pages.dev`；DNS 和 HTTPS 验证仍为 `pending`。现有 `pages.dev` 地址可直接访问及下载安装包。GitHub 源码提交与 0.1.3 Release 上传不属于本次官网部署。
+- 官网新增六套静态主题预览，沿用设计稿的专属物件，统一标注“尚未上线”；图片压缩为 WebP，合计约 659 KiB。未将这些主题加入安装包，本地、`pages.dev` 及自定义域名的 1440、768、390、320 像素宽度检查及六张图片加载通过，无页面错误。
+- `wherefile.soul.中国`（ASCII：`wherefile.soul.xn--fiqs8s`）已关联到 Pages。阿里云 DNS 的 `wherefile` CNAME 指向 `wherefile-865.pages.dev`，Cloudflare 域名验证及证书状态均为 `active`。公网 HTTPS 证书校验成功，首页及六张主题图为 200；通过自定义域名真实下载的 0.1.3 EXE 大小、SHA256 与原包一致，证据在 `output/live-verification/custom-domain/`。GitHub 源码提交与 0.1.3 Release 上传不属于本次官网部署。
 
 ## 2026-11-13 “设为桌面壁纸”无反馈排查
 
