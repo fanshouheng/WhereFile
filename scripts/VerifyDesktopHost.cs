@@ -26,7 +26,8 @@ static class DesktopHostTest
     static int Main(string[] args){
         if(args.Length>0){typeof(Program).GetMethod("Main",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{args});return 0;}
         string path=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),"海屿航行验证-"+Guid.NewGuid().ToString("N")+".txt");
-        int result=1,stage=0,ticks=0;Point first=Point.Empty;DesktopEntry entry=null;bool savedPause=false;
+        int result=1,stage=0,ticks=0;Point first=Point.Empty;DesktopEntry entry=null;bool savedPause=false,requested=false,attachmentChecked=false;
+        IntPtr previousForeground=Native.GetForegroundWindow();
         var movementGaps=new List<double>();var movementClock=new Stopwatch();
         string savedWallpaper="tropical";
         Application.EnableVisualStyles();
@@ -38,11 +39,25 @@ static class DesktopHostTest
                 if(++ticks>70)throw new Exception("Native pipeline timeout at stage "+stage);
                 var window=(IslandWindow)Field(context,"window");
                 var controller=(DesktopBoats)Field(window,"desktopBoats");
-                if(!window.Ready||controller==null){if(stage==0)ticks=0;return;}
-                if(!window.Wallpaper){context.ApplyWallpaper();if(stage==0)ticks=0;return;}
+                if(!window.Ready||controller==null)return;
+                if(!window.Wallpaper){
+                    if(!requested){
+                        requested=true;
+                        var view=(Microsoft.Web.WebView2.WinForms.WebView2)Field(window,"view");
+                        view.CoreWebView2.ExecuteScriptAsync("document.getElementById('set-wallpaper').click()");
+                    }
+                    return;
+                }
+                // Test the attach/boat bridge without foreground apps pausing it.
+                // Suspension behavior is covered separately by verify-motion.cjs.
+                if(!attachmentChecked){
+                    ((Timer)Field(context,"timer")).Stop();window.SetSuspended(false);
+                    attachmentChecked=true;ticks=0;return;
+                }
                 var shell=(DesktopShell)Field(controller,"shell");
                 var boats=(Dictionary<string,BoatWindow>)Field(controller,"boats");
                 if(stage==0&&ticks>=6){
+                    if(Native.GetParent(window.Handle)!=window.DesktopParent||!Native.IsWindowVisible(window.Handle))throw new Exception("Attached wallpaper is not visible under its selected parent.");
                     entry=shell.Read().FirstOrDefault(e=>e.Path==path);if(entry==null)return;
                     savedPause=context.UserPaused;context.SetPaused(false);
                     savedWallpaper=((Dictionary<string,ToolStripMenuItem>)Field(context,"wallpaperItems")).First(p=>p.Value.Checked).Key;
@@ -76,13 +91,19 @@ static class DesktopHostTest
                     if(boats.Count!=0||shell.IsHidden(entry))throw new Exception("Dragging to shore did not restore native icon.");
                     if(File.ReadAllText(path)!="Temporary native bridge fixture")throw new Exception("File content changed.");
                     Console.WriteLine("PASS: manager startup -> wallpaper -> real Shell position change detected -> hidden icon and moving boat -> shore restore.");
-                    result=0;window.Post(new{type="choose-wallpaper",id=savedWallpaper});context.SetPaused(savedPause);stage=4;ticks=0;
+                    window.Post(new{type="choose-wallpaper",id=savedWallpaper});context.SetPaused(savedPause);stage=4;ticks=0;
                 }else if(stage==4&&ticks>=2){
+                    context.Manage();
+                    if(window.Wallpaper||Native.GetParent(window.Handle)!=IntPtr.Zero||!Native.IsWindowVisible(window.Handle))throw new Exception("Manager was not restored after desktop mode.");
+                    if((Native.GetWindowLongPtr(window.Handle,-20).ToInt64()&Native.WS_EX_LAYERED)!=0)throw new Exception("Desktop layered style leaked into the manager.");
+                    Console.WriteLine("PASS: desktop attachment returns to a visible manager with original window styles.");
+                    result=0;
                     timer.Stop();context.Quit();
                 }
             }catch(Exception e){Console.Error.WriteLine(e);if(stage>0)context.SetPaused(savedPause);timer.Stop();context.Quit();}
         };
         timer.Start();Application.Run(context);timer.Dispose();
+        if(Native.IsWindow(previousForeground))Native.SetForegroundWindow(previousForeground);
         if(File.Exists(path))File.Delete(path);return result;
     }
 }

@@ -287,9 +287,27 @@ function frame(now){
 
 if(nativeHost){
   $('set-wallpaper').hidden=false;$('fullscreen').hidden=true;
-  $('set-wallpaper').onclick=()=>{if(motionChoice===null)chooseMotion('play');nativeHost.postMessage({type:'wallpaper'});};
+  let wallpaperTimer=null;
+  function finishWallpaperRequest(message=''){
+    clearTimeout(wallpaperTimer);wallpaperTimer=null;
+    $('set-wallpaper').disabled=false;$('set-wallpaper').textContent='设为桌面壁纸';
+    $('set-wallpaper').removeAttribute('aria-busy');
+    const dialog=$('wallpaper-error-dialog');
+    if(message){$('wallpaper-error-message').textContent=message;if(!dialog.open)dialog.showModal();}
+    else if(dialog.open)dialog.close();
+  }
+  $('close-wallpaper-error').onclick=()=>$('wallpaper-error-dialog').close();
+  $('set-wallpaper').onclick=()=>{
+    if(wallpaperTimer!==null)return;
+    $('set-wallpaper').disabled=true;$('set-wallpaper').textContent='正在设置…';
+    $('set-wallpaper').setAttribute('aria-busy','true');
+    wallpaperTimer=setTimeout(()=>finishWallpaperRequest('设置尚未收到确认。请先查看主显示器桌面；若没有变化，请退出 WhereFile 后重新打开再试。'),12000);
+    try{if(motionChoice===null)chooseMotion('play');nativeHost.postMessage({type:'wallpaper'});}
+    catch{finishWallpaperRequest('无法连接桌面程序，请退出 WhereFile 后重新打开再试。');}
+  };
   nativeHost.addEventListener('message',event=>{
     const data=event.data;
+    if(data?.type==='wallpaper-result'){finishWallpaperRequest(data.success?'':data.message||'暂时无法设为桌面壁纸，请重新打开软件后再试。');return;}
     if(data?.type==='choose-wallpaper'){changeWallpaper(data.id);return;}
     if(data?.type==='desktop-moved'){
       const sea=hostWallpaper&&data.x>shoreX(data.y,cam)+78&&data.x<cam.w-60&&data.y>65&&data.y<cam.h-70;
@@ -309,7 +327,7 @@ if(nativeHost){
       const changed=hostWallpaper!==!!data.wallpaper;
       hostWallpaper=!!data.wallpaper;hostSuspended=!!data.suspended;sceneDirty=true;
       document.body.classList.toggle('wallpaper-mode',hostWallpaper);
-      if(hostWallpaper){finishDrag(true);for(const id of ['search-dialog','preview-dialog','wallpaper-dialog'])if($(id).open)$(id).close();if(motionChoice===null)chooseMotion('play');}
+      if(hostWallpaper){finishWallpaperRequest();finishDrag(true);for(const id of ['search-dialog','preview-dialog','wallpaper-dialog'])if($(id).open)$(id).close();if(motionChoice===null)chooseMotion('play');}
       if(changed)resize();last=performance.now();syncSound();
     }else if(data?.type==='host-command'&&['pause','resume'].includes(data.command))chooseMotion(data.command==='pause'?'pause':'play');
   });

@@ -1,5 +1,7 @@
 ﻿文件漂走了 · WhereFile
 
+桌面兼容性修复构建：win11-layering-20261113。复测前请从托盘退出旧版，再运行本文件夹中的 WhereFile.exe；直接打开新版可能只是唤起仍在运行的旧版。
+
 1. 完整解压后，双击「WhereFile.exe」。
 2. 点击「设为桌面壁纸」，把真实桌面文件、文件夹或快捷方式拖进海域，松开后变成小船并隐藏原图标。
    双击小船打开原文件；拖回岸边恢复原图标。需关闭桌面“自动排列图标”。回收站、此电脑等系统图标暂不转换。
@@ -14,6 +16,11 @@
 
 本机数据：%LOCALAPPDATA%\HaiyuWallpaper
 其中 WebView2 为 WhereFile 文件库和设置，host.log / status.json 用于故障排查。删除数据前请先保存需要的文件副本。
+
+点击“设为桌面壁纸”没有变化时：
+- 按钮会显示“正在设置…”，失败或超过 12 秒未收到确认会在窗口中提示。关闭提示后可以重试。
+- 先查看主显示器桌面；若仍未改变，退出其他动态壁纸软件，并从托盘退出 WhereFile 后重新打开再试。
+- 仍有问题时，按 Win+R 输入 %LOCALAPPDATA%\HaiyuWallpaper，提供 host.log、status.json，以及 winver 显示的 Windows 版本、具体表现（窗口不变／窗口消失但桌面不变／出现错误）。无需发送整个 WebView2 文件夹或删除本机数据。
 
 命令：
 WhereFile.exe --wallpaper  直接进入壁纸

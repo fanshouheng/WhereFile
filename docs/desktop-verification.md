@@ -1,5 +1,29 @@
 # 海屿桌面版验证 · 2026-11-10
 
+## 2026-11-13 “设为桌面壁纸”无反馈排查
+
+- 确认旧实现点击后无等待状态，附着失败只显示托盘气泡，且未检查窗口定位、显示 API 的返回值。这些是已确认的反馈和校验缺口，尚不能确定反馈用户电脑上的具体根因。
+- 新增等待状态、重复提交保护、失败弹窗和 12 秒未确认提示；失败时先恢复管理窗口，允许重试。收到延迟成功确认后关闭超时提示。启动日志包含 Windows 和 WebView2 版本，原生异常保留详细信息。
+- `npm run check`、`node scripts/verify-wallpaper-action.cjs`、`node scripts/verify-motion.cjs` 通过。行为测试覆盖原生失败、桥接异常、无响应、延迟成功和重试。
+- Edge 真实浏览器通过模拟宿主消息检查等待、失败、关闭后重试及无响应弹窗，无控制台错误；截图在 `output/playwright/wallpaper-failure.png`。这是前端反馈验证，不代表在浏览器中完成系统壁纸设置。
+- `scripts/verify-desktop-host.ps1` 通过：Windows 10 build 19045、WebView2 157.0.4341.46，使用与发布程序相同的清单，通过真实 WebView 页面按钮触发宿主，成功附着 WorkerW，文件变船、移动、换景和靠岸恢复通过。临时文件已清理，恢复记录为 `[]`。
+- 回归期间最大化的前台应用曾触发预期的暂停，使移动测试失败。测试现暂时聚焦桌面并在结束后恢复先前前台窗口，测试期间没有关闭用户应用。
+- 仍需反馈用户提供 Windows 版本、点击后的具体表现，以及 `%LOCALAPPDATA%\HaiyuWallpaper` 下的 `host.log`、`status.json`。本机通过不等于已验证 Windows 11 各版本或用户的桌面层结构。
+
+## 2026-11-13 Windows 11 日志跟进与层级修复
+
+- 用户提供的日志确认多次 `SetParent` 返回 `win32Error=0`，实际父窗口为 `Progman`；状态为 `ready=true`、`mode=wallpaper`、`suspended=false`、`nativeVisible=true`、2560×1600、144 DPI、无异常。因此请求确已到达宿主，不能把现象归因于按钮未响应、缺少 WebView2 或 DPI 不一致。
+- 旧实现找不到顶层 WorkerW 时回退至 Progman，并始终使用 HWND_BOTTOM。部分 Windows 11 的桌面图标和原壁纸 WorkerW 都是 Progman 的子窗口，放到底部会被原壁纸遮挡。用户旧日志没有记录子窗口结构，尚需新版复测确认其机器确实命中这一分支。
+- 按桌面结构选择附着方式：传统桌面保留独立 WorkerW；嵌套桌面使用不透明的 WS_EX_LAYERED 子窗口，紧邻图标层下方、原壁纸上方。完整桌面层不可用时返回错误，不再盲目回退 Progman。管理模式恢复原窗口样式。
+- 使用 0x052C / 0xD / 1 请求桌面层，不成功时兼容旧参数；记录 Progman 样式、图标层、子 WorkerW、传统 WorkerW、选中的父窗口及插入位置。状态增加构建标识 `win11-layering-20261113`、分层样式和相邻窗口类名，方便确认实际运行的版本和层级。
+- `scripts/verify-desktop-host.ps1 -LayerOnly` 验证传统布局、嵌套布局、存在无关顶层 WorkerW、桌面结构不完整及旧 Progman 错误回退。此测试验证布局选择，不等同于真实 Win11 的合成画面验收。
+- 本机 Windows 10 build 19045 的真实 WebView 按钮 → WorkerW 附着 → 文件变船 → 动态位置 → 换景 → 恢复图标 → 回到管理窗口全部通过；恢复记录为空。此前两次移动测试受前台最大化应用触发暂停影响，测试现停止其测试实例的前台监测定时器、解除挂起，以单独检验桌面桥接；产品逻辑未禁用自动暂停，`verify-motion.cjs` 的挂起/恢复测试另行通过。
+- 语法检查、按钮成功/失败/超时测试、布局选择测试和动态回归通过。生成 `WhereFile-Win11-layering-test.zip` 供对方复测，未发布为正式版本，也未将本机结果表述为真实 Win11 验收。
+- 桌面结构依据：[Lively 中记录的 Windows raised desktop 结构说明](https://github.com/rocksdanister/lively/blob/core-separation/src/Lively/Lively/Core/WinDesktopCore.cs)。仅参考窗口结构与 Win32 API 行为，未引入第三方源文件或依赖。
+- 对方复测时必须先从托盘退出旧版，再完整解压并运行新版。单实例程序直接打开第二个 EXE 只会唤起旧实例；应以新日志和 `status.json` 中的 `hostBuild` 确认升级。
+
+## 2026-11-10 初始桌面验证
+
 - `npm run check` 通过。
 - `verify-voyage.cjs` 通过：1440×900、1920×1080、3840×2160、390×844；普通与壁纸模式十分钟覆盖至少 8/9 海域及横纵 70% 范围，持续巡航、无风停航、低帧率、强风避岸通过。
 - `verify-motion.cjs` 执行实际帧函数：1/15/60 FPS 均准确推进八秒，最大位置差 0.038px；暂停、宿主挂起与恢复、窄屏强风通过。

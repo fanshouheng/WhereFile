@@ -73,6 +73,7 @@ body.is-dragging .shore-hint { opacity:1; }
 .range-labels { display:flex; justify-content:space-between; margin-top:8px; }
 dialog { padding:0; width:min(480px,calc(100vw - 32px)); }
 dialog::backdrop { background:#103e4928; backdrop-filter:blur(5px); }
+.wallpaper-error-content { padding:8px 20px 24px; font-size:13px; line-height:1.8; overflow-wrap:anywhere; }
 .wallpaper-dialog { width:min(760px,calc(100vw - 32px)); }
 .wallpaper-options { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0 22px 24px; }
 .wallpaper-options button { padding:5px;border:2px solid transparent;border-radius:12px;text-align:left; }

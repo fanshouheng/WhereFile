@@ -60,6 +60,15 @@
     <div id="wallpaper-options" class="wallpaper-options"></div>
   </dialog>
 
+  <dialog id="wallpaper-error-dialog" class="glass" aria-labelledby="wallpaper-error-title" aria-describedby="wallpaper-error-message">
+    <div class="preview-heading"><span id="wallpaper-error-title">壁纸设置未完成</span><button class="close-button" id="close-wallpaper-error" aria-label="关闭设置提示">×</button></div>
+    <div class="wallpaper-error-content">
+      <p id="wallpaper-error-message"></p>
+      <p>若仍无法设置，请将 Windows 版本和以下目录中的 host.log、status.json 发给开发者：</p>
+      <code>%LOCALAPPDATA%\HaiyuWallpaper</code>
+    </div>
+  </dialog>
+
   <dialog id="preview-dialog" class="glass preview-dialog">
     <div class="preview-heading"><span id="preview-title"></span><button class="close-button" id="close-preview" aria-label="关闭预览">×</button></div>
     <div id="preview-content"></div>

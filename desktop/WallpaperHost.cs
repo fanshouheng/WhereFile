@@ -18,6 +18,7 @@ static class Program
     internal static readonly string DataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HaiyuWallpaper");
     internal static readonly JavaScriptSerializer Json = new JavaScriptSerializer();
     internal const string EventPrefix = "Local\\HaiyuWallpaper.";
+    internal const string HostBuild = "win11-layering-20261113";
 
     [STAThread]
     static void Main(string[] args)
@@ -116,7 +117,7 @@ sealed class WallpaperContext : ApplicationContext
         timer.Interval = 750;
         timer.Tick += Tick;
         timer.Start();
-        Program.Log("Started " + (wallpaper ? "wallpaper" : "manager"));
+        Program.Log("Started " + (wallpaper ? "wallpaper" : "manager") + "; build=" + Program.HostBuild + "; OS=" + Environment.OSVersion + "; x64=" + Environment.Is64BitOperatingSystem);
     }
 
     void CreateWindow(bool wallpaper)
@@ -193,6 +194,7 @@ sealed class WallpaperContext : ApplicationContext
 
     internal void ApplyWallpaper()
     {
+        Program.Log("Wallpaper requested; ready=" + (window != null && window.Ready));
         wantedWallpaper = true;
         if (window != null && window.Ready)
         {
@@ -203,7 +205,8 @@ sealed class WallpaperContext : ApplicationContext
     internal void AttachmentFailed(string message)
     {
         wantedWallpaper = false;
-        tray.ShowBalloonTip(6000, "暂时无法设为桌面壁纸", message, ToolTipIcon.Info);
+        window.ShowManager();
+        window.Post(new { type = "wallpaper-result", success = false, message = message });
     }
     internal void DesktopNotice(string message){tray.ShowBalloonTip(6000,"桌面小船",message,ToolTipIcon.Info);}
     internal void WallpaperChoice(string id){foreach(var item in wallpaperItems)item.Value.Checked=item.Key==id;}
@@ -288,6 +291,7 @@ sealed class IslandWindow : Form
             var environment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Program.DataDirectory, "WebView2"), options);
             await view.EnsureCoreWebView2Async(environment);
             CoreWebView2 core = view.CoreWebView2;
+            Program.Log("WebView2=" + environment.BrowserVersionString);
             core.Settings.AreDefaultContextMenusEnabled = false;
             core.Settings.AreDevToolsEnabled = false;
             core.Settings.IsStatusBarEnabled = false;
@@ -359,7 +363,7 @@ sealed class IslandWindow : Form
                     break;
             }
         }
-        catch (Exception error) { Program.Log("Ignored invalid page message: " + error.GetType().Name); }
+        catch (Exception error) { Program.Log("Page message failed: " + error); }
     }
 
     internal void Post(object message)
@@ -385,8 +389,10 @@ sealed class IslandWindow : Form
         changingMode = true;
         try
         {
-            IntPtr parent = Native.WallpaperParent();
+            Native.DesktopLayer desktop = Native.WallpaperLayer();
+            IntPtr parent = desktop.Parent;
             if (parent == IntPtr.Zero) throw new InvalidOperationException("没有找到 Windows 桌面层。可先使用管理窗口，稍后再设为壁纸。");
+            if (!Native.IsWindowVisible(parent)) throw new InvalidOperationException("Windows 桌面层当前不可见，请关闭其他动态壁纸软件后重试。");
             WindowState = FormWindowState.Normal;
             IntPtr hwnd = Handle;
             if (!savedWindowStyle)
@@ -400,7 +406,10 @@ sealed class IslandWindow : Form
             long style = Native.GetWindowLongPtr(hwnd, -16).ToInt64();
             Native.SetWindowLongPtr(hwnd, -16, new IntPtr((style | Native.WS_CHILD) & ~(Native.WS_POPUP | Native.WS_OVERLAPPEDWINDOW)));
             long extended = Native.GetWindowLongPtr(hwnd, -20).ToInt64();
+            extended = (extended & ~Native.WS_EX_LAYERED) | (desktop.Layered ? Native.WS_EX_LAYERED : managerExtendedStyle & Native.WS_EX_LAYERED);
             Native.SetWindowLongPtr(hwnd, -20, new IntPtr((extended | Native.WS_EX_NOACTIVATE | Native.WS_EX_TOOLWINDOW) & ~Native.WS_EX_APPWINDOW));
+            if (desktop.Layered && !Native.SetLayeredWindowAttributes(hwnd, 0, 255, 2))
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "无法创建 Windows 桌面显示层。");
             Program.Log("Attach begin hwnd=" + hwnd.ToInt64() + " parent=" + parent.ToInt64() + " class=" + Native.ClassName(parent) + " childDpi=" + Native.DpiDescription(hwnd) + " parentDpi=" + Native.DpiDescription(parent));
             Native.SetLastError(0);
             IntPtr previous = Native.SetParent(hwnd, parent);
@@ -409,26 +418,28 @@ sealed class IslandWindow : Form
             IntPtr current = IsHandleCreated ? Handle : IntPtr.Zero;
             Program.Log("Attach result hwnd=" + hwnd.ToInt64() + " currentHwnd=" + current.ToInt64() + " previousParent=" + previous.ToInt64() + " win32Error=" + errorCode + " actualParent=" + actualParent.ToInt64() + " class=" + Native.ClassName(actualParent));
             if (current != hwnd || actualParent != parent) throw new InvalidOperationException("Windows 未允许嵌入桌面（" + errorCode + "）。请查看 host.log。");
+            Rectangle area = Screen.PrimaryScreen.Bounds;
+            Native.POINT point = new Native.POINT { X = area.X, Y = area.Y };
+            if (!Native.ScreenToClient(parent, ref point)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "无法定位 Windows 桌面。请重新打开软件后再试。");
+            if (!Native.SetWindowPos(hwnd, desktop.InsertAfter, point.X, point.Y, area.Width, area.Height, Native.SWP_NOACTIVATE | Native.SWP_FRAMECHANGED | Native.SWP_SHOWWINDOW))
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Windows 未能显示壁纸窗口。请重新打开软件后再试。");
+            if (!Native.IsWindowVisible(hwnd)) throw new InvalidOperationException("壁纸窗口未能显示，请重新打开软件后再试。");
             DesktopParent = parent;
             Wallpaper = true;
             if(desktopBoats!=null)desktopBoats.SetMode(true);
             errorMessage = "";
-            Rectangle area = Screen.PrimaryScreen.Bounds;
-            Native.POINT point = new Native.POINT { X = area.X, Y = area.Y };
-            Native.ScreenToClient(parent, ref point);
-            Native.SetWindowPos(hwnd, Native.HWND_BOTTOM, point.X, point.Y, area.Width, area.Height, Native.SWP_NOACTIVATE | Native.SWP_FRAMECHANGED | Native.SWP_SHOWWINDOW);
             SendState();
+            Post(new { type = "wallpaper-result", success = true });
             WriteStatus();
             Program.Log("Wallpaper attached to " + Native.ClassName(parent) + " " + parent.ToInt64());
             return true;
         }
         catch (Exception error)
         {
-            Program.Log("Attach failed: " + error.Message);
+            Program.Log("Attach failed: " + error);
             errorMessage = error.Message;
-            owner.AttachmentFailed(error.Message);
             changingMode = false;
-            ShowManager();
+            owner.AttachmentFailed(error.Message);
             return false;
         }
         finally { changingMode = false; }
@@ -483,10 +494,12 @@ sealed class IslandWindow : Form
             IntPtr foreground = Native.GetForegroundWindow();
             Native.RECT rect;
             Native.GetWindowRect(hwnd, out rect);
-            var status = new { running = running && !owner.Exiting, mode = Wallpaper ? "wallpaper" : "manage", suspended = suspended, paused = owner.UserPaused,
+            var status = new { hostBuild = Program.HostBuild, running = running && !owner.Exiting, mode = Wallpaper ? "wallpaper" : "manage", suspended = suspended, paused = owner.UserPaused,
                 ready = Ready, handle = hwnd.ToInt64(), parent = Native.GetParent(hwnd).ToInt64(),
                 parentClass = Native.ClassName(DesktopParent), width = ClientSize.Width, height = ClientSize.Height,
                 visible = Visible, nativeVisible = Native.IsWindowVisible(hwnd), windowState = WindowState.ToString(),
+                layered = (Native.GetWindowLongPtr(hwnd, -20).ToInt64() & Native.WS_EX_LAYERED) != 0,
+                previousSiblingClass = Native.ClassName(Native.GetWindow(hwnd, 3)), nextSiblingClass = Native.ClassName(Native.GetWindow(hwnd, 2)),
                 rect = new { x = rect.Left, y = rect.Top, width = rect.Right - rect.Left, height = rect.Bottom - rect.Top },
                 viewVisible = view.Visible, foreground = foreground.ToInt64(), foregroundClass = Native.ClassName(foreground),
                 processId = Process.GetCurrentProcess().Id, updatedUtc = DateTime.UtcNow.ToString("o"), error = errorMessage };
@@ -499,6 +512,7 @@ sealed class IslandWindow : Form
 static class Native
 {
     internal const long WS_CHILD = 0x40000000L, WS_POPUP = 0x80000000L, WS_OVERLAPPEDWINDOW = 0x00CF0000L, WS_EX_NOACTIVATE = 0x08000000L, WS_EX_TOOLWINDOW = 0x80L, WS_EX_APPWINDOW = 0x40000L;
+    internal const long WS_EX_LAYERED = 0x00080000L, WS_EX_NOREDIRECTIONBITMAP = 0x00200000L;
     internal const uint SWP_NOACTIVATE = 0x0010, SWP_FRAMECHANGED = 0x0020, SWP_SHOWWINDOW = 0x0040;
     internal static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
     internal delegate bool EnumWindowProc(IntPtr hwnd, IntPtr data);
@@ -506,15 +520,17 @@ static class Native
     [StructLayout(LayoutKind.Sequential)] internal struct POINT { public int X, Y; }
     [DllImport("user32.dll", SetLastError = true)] internal static extern IntPtr SetParent(IntPtr child, IntPtr parent);
     [DllImport("user32.dll")] internal static extern IntPtr GetParent(IntPtr hwnd);
+    [DllImport("user32.dll")] internal static extern IntPtr GetWindow(IntPtr hwnd, uint command);
+    [DllImport("user32.dll", SetLastError = true)] internal static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint color, byte alpha, uint flags);
     [DllImport("user32.dll")] internal static extern bool IsWindow(IntPtr hwnd);
     [DllImport("user32.dll")] internal static extern bool IsWindowVisible(IntPtr hwnd);
     [DllImport("user32.dll")] internal static extern bool IsZoomed(IntPtr hwnd);
-    [DllImport("user32.dll")] internal static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int width, int height, uint flags);
+    [DllImport("user32.dll", SetLastError = true)] internal static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int width, int height, uint flags);
     [DllImport("user32.dll")] internal static extern bool ShowWindow(IntPtr hwnd, int command);
     [DllImport("user32.dll")] static extern IntPtr GetWindowDpiAwarenessContext(IntPtr hwnd);
     [DllImport("user32.dll")] static extern int GetAwarenessFromDpiAwarenessContext(IntPtr context);
     [DllImport("user32.dll")] static extern uint GetDpiForWindow(IntPtr hwnd);
-    [DllImport("user32.dll")] internal static extern bool ScreenToClient(IntPtr hwnd, ref POINT point);
+    [DllImport("user32.dll", SetLastError = true)] internal static extern bool ScreenToClient(IntPtr hwnd, ref POINT point);
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] internal static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] internal static extern IntPtr SetWindowLongPtr(IntPtr hwnd, int index, IntPtr value);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern IntPtr FindWindow(string className, string title);
@@ -549,25 +565,59 @@ static class Native
         catch (EntryPointNotFoundException) { return "unavailable"; }
     }
 
-    internal static IntPtr WallpaperParent()
+    internal struct DesktopLayer
+    {
+        internal IntPtr Parent, InsertAfter;
+        internal bool Layered;
+    }
+
+    internal static DesktopLayer SelectWallpaperLayer(IntPtr progman, long extendedStyle, IntPtr icons, IntPtr childWorker, IntPtr classicWorker)
+    {
+        if (progman == IntPtr.Zero) return new DesktopLayer();
+        if ((extendedStyle & WS_EX_NOREDIRECTIONBITMAP) != 0 || childWorker != IntPtr.Zero)
+        {
+            // Raised desktops put the original background inside Progman. Our opaque
+            // layered child must sit immediately below the icons, above that background.
+            if (icons == IntPtr.Zero || childWorker == IntPtr.Zero) return new DesktopLayer();
+            return new DesktopLayer { Parent = progman, InsertAfter = icons, Layered = true };
+        }
+        return new DesktopLayer { Parent = classicWorker, InsertAfter = HWND_BOTTOM };
+    }
+
+    internal static DesktopLayer WallpaperLayer()
     {
         IntPtr progman = FindWindow("Progman", null), result;
-        if (progman == IntPtr.Zero) return IntPtr.Zero;
+        if (progman == IntPtr.Zero) return new DesktopLayer();
+        IntPtr sent = SendMessageTimeout(progman, 0x052C, new IntPtr(0xD), new IntPtr(1), 2, 1000, out result);
+        Program.Log("Desktop raise request completed=" + (sent != IntPtr.Zero));
+        DesktopLayer desktop = FindWallpaperLayer(progman);
+        if (desktop.Parent != IntPtr.Zero) return desktop;
+        // Older shells may only respond to the original message parameters.
         SendMessageTimeout(progman, 0x052C, IntPtr.Zero, IntPtr.Zero, 2, 1000, out result);
+        return FindWallpaperLayer(progman);
+    }
+
+    static DesktopLayer FindWallpaperLayer(IntPtr progman)
+    {
         IntPtr worker = IntPtr.Zero;
         EnumWindows(delegate(IntPtr top, IntPtr data)
         {
-            if (FindWindowEx(top, IntPtr.Zero, "SHELLDLL_DefView", null) != IntPtr.Zero)
+            string name = ClassName(top);
+            if ((name == "Progman" || name == "WorkerW") && FindWindowEx(top, IntPtr.Zero, "SHELLDLL_DefView", null) != IntPtr.Zero)
             {
                 worker = FindWindowEx(IntPtr.Zero, top, "WorkerW", null);
+                while (worker != IntPtr.Zero && (!IsWindowVisible(worker) || FindWindowEx(worker, IntPtr.Zero, "SHELLDLL_DefView", null) != IntPtr.Zero))
+                    worker = FindWindowEx(IntPtr.Zero, worker, "WorkerW", null);
                 return worker == IntPtr.Zero;
             }
             return true;
         }, IntPtr.Zero);
-        // Current shells may place the icon host directly under Progman.
-        // A child placed at HWND_BOTTOM stays behind that icon host.
-        if (worker == IntPtr.Zero && FindWindowEx(progman, IntPtr.Zero, "SHELLDLL_DefView", null) != IntPtr.Zero) worker = progman;
-        return worker;
+        IntPtr icons = FindWindowEx(progman, IntPtr.Zero, "SHELLDLL_DefView", null);
+        IntPtr childWorker = FindWindowEx(progman, IntPtr.Zero, "WorkerW", null);
+        long extended = GetWindowLongPtr(progman, -20).ToInt64();
+        DesktopLayer desktop = SelectWallpaperLayer(progman, extended, icons, childWorker, worker);
+        Program.Log("Desktop layout progman=" + progman.ToInt64() + " exStyle=0x" + extended.ToString("X") + " icons=" + icons.ToInt64() + " childWorker=" + childWorker.ToInt64() + " classicWorker=" + worker.ToInt64() + " selected=" + desktop.Parent.ToInt64() + " insertAfter=" + desktop.InsertAfter.ToInt64() + " layered=" + desktop.Layered);
+        return desktop;
     }
 
     internal static void RedrawDesktop()
