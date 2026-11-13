@@ -6,12 +6,12 @@
 - 本地构建的五个网页入口文件与源码哈希一致；`output/desktop/WhereFile-Win11-layering-test.zip` 是供复测的测试包，不是正式发布。当前构建标识为 `win11-layering-20261113`。
 - 本次重新通过语法、航行、三套壁纸边界、帧率/挂起、按钮反馈、资源访问及 `verify-desktop-host.ps1 -LayerOnly` 检查。`127.0.0.1:4173` 返回 WhereFile 页面，所服务的 `app.js` 与当前源码一致。
 - 2026-11-13 用户反馈“真实win11测试没问题了”，据此将真实 Windows 11 复测标为通过。证据来自用户实机反馈，本次收尾未独立操作该机器；未记录其具体 Windows 11 版本、构建号或测试步骤，不扩大为所有 Windows 11 版本与交互的验收。
-- 本次收尾未运行原生桌面宿主或操作真实图标，以下本机桌面交互与性能结果均为带日期的历史记录。修复版正式发布仍为 `pending`，实机通过不代表已经推送或发布。
+- 本次收尾未运行原生桌面宿主或操作真实图标，以下本机桌面交互与性能结果均为带日期的历史记录。包含修复的 0.1.3 安装包现已通过官网提供下载；GitHub Releases 仍为 0.1.2，修复提交尚未推送。
 - `%LOCALAPPDATA%\HaiyuWallpaper` 是现用兼容数据目录，并非旧品牌残留。复测前先从托盘退出旧实例，再用 `host.log` 和 `status.json.hostBuild` 核对实际构建；不要删除用户数据来确认升级。
 
 ## 2026-11-13 单文件安装包 · 0.1.3
 
-- 新增 `desktop/build-installer.ps1` 与 `desktop/installer.iss`，生成 `output/installer/WhereFile-v0.1.3-Setup-x64.exe` 和 `SHA256SUMS.txt`。本地安装包包含现有 Win11 层级修复，尚未推送或正式发布。
+- 新增 `desktop/build-installer.ps1` 与 `desktop/installer.iss`，生成 `output/installer/WhereFile-v0.1.3-Setup-x64.exe` 和 `SHA256SUMS.txt`。安装包包含现有 Win11 层级修复，已通过官网提供下载，尚未上传 GitHub Releases。
 - 当前用户安装，无需管理员权限，默认目录为 `%LOCALAPPDATA%\Programs\WhereFile`；创建开始菜单快捷方式和卸载入口。安装结束可选打开管理窗口，不自动切换壁纸或设置开机启动。
 - 内含签名验证通过的 Microsoft WebView2 引导程序，缺少运行环境时联网安装。卸载保留 `%LOCALAPPDATA%\HaiyuWallpaper` 与共享 WebView2 Runtime；升级与卸载发送退出事件并等待实例结束，不强杀应用。
 - 本机 Windows 10 的隔离目录静默安装返回 0；19 个程序文件与构建源逐文件哈希一致，开始菜单、版本 0.1.3、卸载入口均存在；静默安装未自动启动程序。中文安装标题与控件文字通过辅助功能接口读取，截图采集超时，未将界面截图验收记为通过。
@@ -23,7 +23,9 @@
 - Playwright / Edge 验证了 1440、768、390、320 像素宽度无横向溢出，以及三景切换、暂停/播放、键盘与拖动变船、FAQ、减少动态偏好和图片加载；无页面错误。截图在 `output/playwright/wherefile-site-*-full.png`。
 - 从页面实际下载的 0.1.3 EXE 大小为 6,191,283 字节，SHA256 为 `47ce1e2035b7b5913daf7755eb134b2fde32908862d73aac3d66e593c9a9cf2a`，与原安装包逐字节一致。`npm run site:verify` 另验证下载、HEAD、路径隔离和错误方法处理。
 - Wrangler 4.161.0 的 Pages 本地运行确认两组响应头规则有效，EXE 返回附件下载；缺失页面和私有路径为 404，同样通过完整安装包下载哈希验证。
-- 本次未部署至 Cloudflare：插件已启用，但当前会话无可调用的 Cloudflare MCP 工具，Wrangler 未认证。公网页面、域名和线上下载仍为 `pending`。
+- Wrangler OAuth 已认证，2026-11-13 通过 Direct Upload 部署到 Cloudflare Pages 项目 `wherefile`，生产地址为 [https://wherefile-865.pages.dev/](https://wherefile-865.pages.dev/)。生产分支为 `master`，源码提交为 `df6b738`，部署 ID 为 `1289ce93-4cbd-49c3-a0fa-f8b8386e67fe`。
+- 公网生产地址通过相同的 Playwright / Edge 布局及交互检查，覆盖 1440、768、390、320 像素宽度，图片全部加载，无页面错误。截图在 `output/playwright/wherefile-live-*-full.png`。浏览器真实点击下载的 EXE 大小和 SHA256 与上述本地安装包一致；独立 HTTP 下载、HEAD、附件及安全响应头、缺失路径与 `/.local/` 返回 404 的检查也通过，证据在 `output/live-verification/`。
+- 自定义域名尚未提供，绑定仍为 `pending`；现有 `pages.dev` 地址可直接访问及下载安装包。GitHub 源码提交与 0.1.3 Release 上传不属于本次官网部署。
 
 ## 2026-11-13 “设为桌面壁纸”无反馈排查
 

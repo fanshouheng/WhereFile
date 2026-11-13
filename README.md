@@ -28,7 +28,7 @@ npm start
 
 ## Windows 桌面版
 
-在 [Releases](https://github.com/fanshouheng/WhereFile/releases/latest) 下载 Windows x64 免安装包，完整解压后运行 `WhereFile.exe`。
+在 [官网](https://wherefile-865.pages.dev/) 下载 0.1.3 Windows x64 单文件安装包，双击 EXE 安装即可。[GitHub Releases](https://github.com/fanshouheng/WhereFile/releases/latest) 目前仍提供 0.1.2 免安装包。
 
 需要 Windows 10/11 x64、.NET Framework 4.6.2+ 和 Microsoft Edge WebView2 Runtime。也可在项目目录自行构建：
 
@@ -46,9 +46,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build-installer.ps1
 
 当前输出为 `output/installer/WhereFile-v0.1.3-Setup-x64.exe`，下载这一个文件即可安装，无需解压。默认安装到 `%LOCALAPPDATA%\Programs\WhereFile`，无需管理员权限；提供开始菜单快捷方式和 Windows 卸载入口，卸载保留本机文件库与设置。缺少 WebView2 时会自动联网安装运行环境。
 
-构建工具仅解包到忽略的 `output/build-deps/installer/`，不安装到系统；首次构建需联网。0.1.3 安装包目前为本地产物，尚未上传 Releases；上面的正式下载入口仍提供 0.1.2 免安装包。
+构建工具仅解包到忽略的 `output/build-deps/installer/`，不安装到系统；首次构建需联网。0.1.3 安装包已通过官网提供下载，尚未上传 GitHub Releases。
 
-Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈；正式版与本地修复的区别见 [桌面验证记录](docs/desktop-verification.md)。性能测试条件与适用范围见 [性能验证](docs/performance.md)。
+Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈，已包含在官网的 0.1.3 安装包中；与 GitHub 0.1.2 的验证及发布差异见 [桌面验证记录](docs/desktop-verification.md)。性能测试条件与适用范围见 [性能验证](docs/performance.md)。
 
 ## 官网与安装包下载
 
@@ -60,9 +60,9 @@ npm run site
 
 先执行 `desktop/build-installer.ps1` 准备当前版本安装包，再执行 `npm run site:build`。构建输出为 `output/site`，只包含官网资源、正式素材与安装包；`download.json` 的版本来自 `package.json`，文件大小和 SHA256 来自实际安装包。`npm run site:verify` 会验证完整下载、响应头、哈希及路径隔离。
 
-Cloudflare Pages 可直接上传 `output/site`；配置在 `wrangler.jsonc`。认证并确认 Pages 项目后，执行 `npx wrangler@4.161.0 pages deploy output/site --project-name wherefile --branch master`。这不是 Git 自动构建：安装包在本地生成，不在仓库中，云端只运行 `npm run site:build` 会缺少安装包而失败。也可以设置 `WHEREFILE_DOWNLOAD_URL` 为已发布的 HTTPS 下载地址后构建；外部文件的大小、哈希与可用性不会冒充已验证。
+Cloudflare Pages 项目为 `wherefile`，配置在 `wrangler.jsonc`。更新时先构建安装包和官网，再执行 `npx wrangler@4.161.0 pages deploy output/site --project-name wherefile --branch master` 上传完整目录。这不是 Git 自动构建：安装包在本地生成，不在仓库中，云端只运行 `npm run site:build` 会缺少安装包而失败。也可以设置 `WHEREFILE_DOWNLOAD_URL` 为已发布的 HTTPS 下载地址后构建；外部文件的大小、哈希与可用性不会冒充已验证。
 
-当前官网仅在本地验证，Cloudflare 部署、域名绑定及公网下载验证待完成。
+官网已于 2026-11-13 部署至 [https://wherefile-865.pages.dev/](https://wherefile-865.pages.dev/)。公网桌面及手机布局、互动与真实安装包下载已验证，下载 SHA256 与本地安装包一致；自定义域名尚未提供，绑定待完成。详细证据见 [桌面验证记录](docs/desktop-verification.md)。
 
 ## 主界面设计预览
 
