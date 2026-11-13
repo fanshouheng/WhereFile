@@ -24,13 +24,14 @@ function fileIcon(kind,id){
 
 let cam=camera(innerWidth,innerHeight),items=[],selected=null,drag=null,time=0,paused=false,wind=.35;
 const nativeHost=window.chrome?.webview;
-let hostWallpaper=false,hostSuspended=false;
+let hostWallpaper=false,hostSuspended=false,sceneDirty=true;
 const motionMedia=matchMedia('(prefers-reduced-motion: reduce)');
 let motionChoice=null;
 try{const saved=localStorage.getItem('island-motion');if(saved==='play'||saved==='pause')motionChoice=saved;}catch{}
 let reduced=motionChoice===null&&motionMedia.matches;
 paused=motionChoice==='pause';
 function updateMotionControl(){
+  sceneDirty=true;
   const stopped=reduced||paused,label=reduced?'播放动态海浪':paused?'继续漂流':'暂停漂流';
   $('pause').innerHTML=icon(stopped?'play':'pause');$('pause').setAttribute('aria-pressed',String(stopped));$('pause').setAttribute('aria-label',label);$('pause').title=label;
   $('scene-status').textContent=reduced?'海风已停，随时可以启程。':paused?'让时间，也停一会儿。':'风很轻，海很慢。';
@@ -87,6 +88,7 @@ function safePosition(it){
 }
 
 function addItem(record,position){
+  sceneDirty=true;
   const it={...record,kind:kindOf(record),x:position.x,y:position.y,sea:position.sea,vx:0,vy:0,phase:Math.random()*Math.PI*2,target:null};
   safePosition(it);
   const el=document.createElement('button');el.className='file'+(it.sea?' at-sea':'');el.dataset.id=it.id;el.setAttribute('aria-label',it.name);el.title=it.name+' · 双击打开，拖动出海';
@@ -105,7 +107,7 @@ function addItem(record,position){
   });
   return it;
 }
-function updateSea(it){it.el.classList.toggle('at-sea',it.sea);}
+function updateSea(it){sceneDirty=true;it.el.classList.toggle('at-sea',it.sea);}
 function select(it){selected?.el.classList.remove('selected');selected=it;it?.el.classList.add('selected');}
 function beginDrag(e,it){
   if(e.button!==0||drag)return;e.preventDefault();select(it);it.target=null;it.el.setPointerCapture(e.pointerId);
@@ -119,7 +121,7 @@ function moveDrag(e){if(!drag||drag.pointer!==e.pointerId)return;const now=perfo
   if(drag.moved){const sea=drag.tx>shoreX(drag.ty,cam)+20;if(sea!==drag.it.sea){drag.it.sea=sea;updateSea(drag.it);if(sea&&!reduced)life.ripple(drag.it.x,drag.it.y+35,.8);}}
 }
 function finishDrag(cancelled=false){
-  if(!drag)return;const d=drag;drag=null;const it=d.it;
+  if(!drag)return;sceneDirty=true;const d=drag;drag=null;const it=d.it;
   resetVoyage(it);
   it.el.removeEventListener('pointermove',moveDrag);it.el.removeEventListener('pointerup',endDrag);it.el.removeEventListener('pointercancel',cancelDrag);it.el.removeEventListener('lostpointercapture',lostCapture);
   if(it.el.hasPointerCapture(d.pointer))it.el.releasePointerCapture(d.pointer);
@@ -211,12 +213,13 @@ $('pause').onclick=()=>chooseMotion(reduced||paused?'play':'pause');
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('当前窗口不支持全屏，可使用浏览器全屏。');}};
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').setAttribute('aria-label',document.fullscreenElement?'退出全屏':'全屏');});
 $('tide-settings').onclick=()=>{const show=$('wind-panel').hidden;$('wind-panel').hidden=!show;$('tide-settings').setAttribute('aria-expanded',String(show));};
-function updateWind(){wind=Number($('wind').value)/100;$('wind-label').textContent=wind<.15?'平静':wind<.65?'轻柔':'轻快';try{localStorage.setItem('island-wind',String(wind));}catch{}}
+function updateWind(){sceneDirty=true;wind=Number($('wind').value)/100;$('wind-label').textContent=wind<.15?'平静':wind<.65?'轻柔':'轻快';try{localStorage.setItem('island-wind',String(wind));}catch{}}
 $('wind').oninput=updateWind;updateWind();
 document.addEventListener('pointerdown',e=>{if(!$('wind-panel').contains(e.target)&&!$('tide-settings').contains(e.target)){$('wind-panel').hidden=true;$('tide-settings').setAttribute('aria-expanded','false');}});
 $('island').addEventListener('pointerdown',e=>{if(e.target.closest('.file'))return;select(null);if(!paused&&!reduced&&e.clientX>shoreX(e.clientY,cam)+20)life.ripple(e.clientX,e.clientY,.7);});
 
 function resize(){
+  sceneDirty=true;
   finishDrag(true);const old=cam;cam=camera(innerWidth,innerHeight);cam.wallpaper=hostWallpaper;ocean?.resize(cam);life.resize(cam);
   for(const it of items){it.x=it.x/old.w*cam.w;it.y=it.y/old.h*cam.h;it.target=null;resetVoyage(it);safePosition(it);}
 }
@@ -224,13 +227,14 @@ window.addEventListener('resize',resize);
 motionMedia.addEventListener('change',e=>{if(motionChoice===null){reduced=e.matches;updateMotionControl();}});
 window.addEventListener('pagehide',savePositions);
 function syncSound(){if(audioMaster)audioMaster.gain.setTargetAtTime(audioEnabled&&!document.hidden&&!hostSuspended?.32:0,audioContext.currentTime,.3);}
-document.addEventListener('visibilitychange',()=>{last=performance.now();if(document.hidden)savePositions();syncSound();});
+document.addEventListener('visibilitychange',()=>{last=performance.now();sceneDirty=true;if(document.hidden)savePositions();syncSound();});
 
-let last=performance.now(),lastWake=0,lastSave=0;
+let last=performance.now(),lastWake=0,lastSave=0,lastScenery=0,lastLifeTime=0;
 function frame(now){
   const elapsed=Math.max(0,Math.min((now-last)/1000,1.25));last=now;
   if(!document.hidden&&!hostSuspended){
-    const active=!paused&&!reduced,simDt=active?elapsed:0;
+    const active=!paused&&!reduced;
+    if(!active&&!sceneDirty&&!drag?.moved&&!items.some(it=>it.target)){requestAnimationFrame(frame);return;}
     // Preview windows can render at 1 FPS. Advance real time in small physics steps.
     const steps=Math.max(1,Math.ceil(elapsed*60)),dt=elapsed/steps;
     for(let step=0;step<steps;step++){
@@ -252,18 +256,30 @@ function frame(now){
       }
       if(active)for(const it of items)if(it.sea&&!it.target&&drag?.it!==it)safePosition(it);
     }
+    const poses=[];
     for(const it of items){
       const wx=(it.x-cam.x)/cam.scale,wy=(it.y-cam.y)/cam.scale;
       const bob=it.sea&&!reduced?waveAt(wx,wy,time,wind):0;
       const lean=it.sea&&!reduced?clamp((waveAt(wx+24,wy,time,wind)-waveAt(wx-24,wy,time,wind))*.3,-2,2):0;
-      it.direction=boatDirection(it.heading??10,it.direction);it.el.style.setProperty?.('--boat-direction',it.direction);
-      it.el.style.transform=`translate3d(${it.x.toFixed(2)}px,${(it.y+bob).toFixed(2)}px,0)`;
-      it.visual.style.transform=`rotate(${lean.toFixed(2)}deg)`;it.el.style.zIndex=String(Math.round(it.y/10));
+      it.direction=boatDirection(it.heading??10,it.direction);
+      // Native boats have their own windows; their hidden DOM copies need no style updates.
+      if(nativeHost&&hostWallpaper&&it.desktop){
+        poses.push({id:it.id,x:it.x,y:it.y+bob,direction:it.direction,roll:Number(lean.toFixed(2))});
+      }else{
+        it.el.style.setProperty?.('--boat-direction',it.direction);
+        it.el.style.transform=`translate3d(${it.x.toFixed(2)}px,${(it.y+bob).toFixed(2)}px,0)`;
+        it.visual.style.transform=`rotate(${lean.toFixed(2)}deg)`;it.el.style.zIndex=String(Math.round(it.y/10));
+      }
       if(it.sea&&active&&time-lastWake>.12&&Math.hypot(it.vx,it.vy)>1){const speed=Math.hypot(it.vx,it.vy);life.wake(it.x-it.vx/speed*27,it.y+bob-it.vy/speed*27,it.vx,it.vy);}
     }
     if(time-lastWake>.12)lastWake=time;
-    ocean?.draw(time,wind);life.draw(time,simDt,wind,reduced);
-    if(nativeHost&&hostWallpaper)nativeHost.postMessage({type:'desktop-poses',items:items.filter(it=>it.desktop).map(it=>({id:it.id,x:it.x,y:it.y+waveAt((it.x-cam.x)/cam.scale,(it.y-cam.y)/cam.scale,time,wind),direction:it.direction,roll:parseFloat(it.visual.style.transform.slice(7))||0}))});
+    // Scenery runs at 30 FPS; boat motion and pointer feedback keep every animation frame.
+    if(sceneDirty||now-lastScenery>=1000/30-.5){
+      ocean?.draw(time,wind);life.draw(time,Math.max(0,time-lastLifeTime),wind,reduced);
+      lastScenery=now;lastLifeTime=time;
+    }
+    if(poses.length)nativeHost.postMessage({type:'desktop-poses',items:poses});
+    sceneDirty=false;
     if(now-lastSave>5000){savePositions();lastSave=now;}
   }
   requestAnimationFrame(frame);
@@ -286,12 +302,12 @@ if(nativeHost){
     if(data?.type==='desktop-drag'||data?.type==='desktop-drop'||data?.type==='desktop-doubleclick'){
       const it=items.find(it=>it.id===data.id);if(!it)return;
       if(data.type==='desktop-doubleclick'){openFile(it);return;}
-      it.nativeDragging=data.type==='desktop-drag';
+      sceneDirty=true;it.nativeDragging=data.type==='desktop-drag';
       if(!it.nativeDragging){if(data.x<=shoreX(data.y,cam)+40)nativeHost.postMessage({type:'desktop-restore',id:it.id});else{it.x=data.x;it.y=data.y;it.vx=it.vy=0;safePosition(it);resetVoyage(it);}}return;
     }
     if(data?.type==='host-state'){
       const changed=hostWallpaper!==!!data.wallpaper;
-      hostWallpaper=!!data.wallpaper;hostSuspended=!!data.suspended;
+      hostWallpaper=!!data.wallpaper;hostSuspended=!!data.suspended;sceneDirty=true;
       document.body.classList.toggle('wallpaper-mode',hostWallpaper);
       if(hostWallpaper){finishDrag(true);for(const id of ['search-dialog','preview-dialog','wallpaper-dialog'])if($(id).open)$(id).close();if(motionChoice===null)chooseMotion('play');}
       if(changed)resize();last=performance.now();syncSound();

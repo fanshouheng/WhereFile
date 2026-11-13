@@ -181,7 +181,7 @@ sealed class WallpaperContext : ApplicationContext
         if (name == "Progman" || name == "WorkerW" || name == "Shell_TrayWnd") return false;
         Native.RECT bounds;
         if (!Native.GetWindowRect(foreground, out bounds)) return false;
-        Rectangle screen = Screen.PrimaryScreen.Bounds;
+        Rectangle screen = Native.IsZoomed(foreground) ? Screen.PrimaryScreen.WorkingArea : Screen.PrimaryScreen.Bounds;
         return bounds.Left <= screen.Left + 2 && bounds.Top <= screen.Top + 2 && bounds.Right >= screen.Right - 2 && bounds.Bottom >= screen.Bottom - 2;
     }
 
@@ -259,6 +259,7 @@ sealed class IslandWindow : Form
     DesktopBoats desktopBoats;
     internal bool Ready { get; private set; }
     internal bool Wallpaper { get; private set; }
+    internal bool Suspended { get { return suspended; } }
     internal IntPtr DesktopParent { get; private set; }
 
     internal IslandWindow(WallpaperContext context, bool wallpaper)
@@ -507,6 +508,7 @@ static class Native
     [DllImport("user32.dll")] internal static extern IntPtr GetParent(IntPtr hwnd);
     [DllImport("user32.dll")] internal static extern bool IsWindow(IntPtr hwnd);
     [DllImport("user32.dll")] internal static extern bool IsWindowVisible(IntPtr hwnd);
+    [DllImport("user32.dll")] internal static extern bool IsZoomed(IntPtr hwnd);
     [DllImport("user32.dll")] internal static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int width, int height, uint flags);
     [DllImport("user32.dll")] internal static extern bool ShowWindow(IntPtr hwnd, int command);
     [DllImport("user32.dll")] static extern IntPtr GetWindowDpiAwarenessContext(IntPtr hwnd);

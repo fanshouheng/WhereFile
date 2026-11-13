@@ -52,6 +52,11 @@ void main(){
  vec2 screen=vec2(gl_FragCoord.x,u_view.y-gl_FragCoord.y);
  vec2 p=(screen-u_camera.yz)/u_camera.x;
  float d=p.x-coast(p.y);
+ // Beyond the dry-sand mask, every animated contribution is zero.
+ if(d<=-48.){
+  vec2 uv=clamp(p/vec2(${WORLD.width.toFixed(1)},${WORLD.height.toFixed(1)}),vec2(.001),vec2(.999));
+  gl_FragColor=vec4(texture2D(u_image,uv).rgb,1.);return;
+ }
  float wet=smoothstep(-8.,55.,d);
  float t=u_time;
  vec2 flow=vec2(sin(p.y*.025+t*.57)+sin((p.x+p.y)*.013-t*.36),cos(p.x*.024-t*.43)+sin(p.y*.017+t*.41));
@@ -70,17 +75,21 @@ void main(){
  float broken=smoothstep(.42,.72,noise(p*.015+vec2(t*.035,0.)));
  color=mix(color,vec3(.80,.98,.94),crest*broken*water*(.10+u_wind*.12));
  // Two offset breakers travel toward the actual coastline and dissolve into lace.
- float breaker=(surf(p,d,t,0.)+surf(p,d,t,.5))*smoothstep(-12.,6.,d)*(1.-smoothstep(150.,190.,d));
- color=mix(color,vec3(.96,1.,.91),clamp(breaker*(.74+u_wind*.3)*u_surf,0.,.85));
+ if(u_surf>0.&&d>-12.&&d<190.){
+  float breaker=(surf(p,d,t,0.)+surf(p,d,t,.5))*smoothstep(-12.,6.,d)*(1.-smoothstep(150.,190.,d));
+  color=mix(color,vec3(.96,1.,.91),clamp(breaker*(.74+u_wind*.3)*u_surf,0.,.85));
+ }
  // A shallow sheet reaches the sand, slows at its high point, then drains away.
- float tide=sin(t*.72+sin(p.y*.006)*.18);
- float runup=-7.-(tide*.5+.5)*(15.+u_wind*12.);
- float sand=smoothstep(-48.,-30.,d)*(1.-smoothstep(4.,20.,d));
- float sheet=smoothstep(runup-3.,runup+9.,d)*sand*u_surf;
- color=mix(color,color*vec3(.93,.94,.90)+vec3(.005,.018,.013),sheet*.53);
- float swashEdge=exp(-pow((d-runup)/(1.7+noise(p*.18)*2.),2.))*sand;
- float bubbling=.55+.45*noise(p*.24+vec2(t*.8,0.));
- color=mix(color,vec3(1.,1.,.94),swashEdge*bubbling*(.35+.25*max(0.,cos(t*.72)))*u_surf);
+ if(u_surf>0.&&d>-48.&&d<20.){
+  float tide=sin(t*.72+sin(p.y*.006)*.18);
+  float runup=-7.-(tide*.5+.5)*(15.+u_wind*12.);
+  float sand=smoothstep(-48.,-30.,d)*(1.-smoothstep(4.,20.,d));
+  float sheet=smoothstep(runup-3.,runup+9.,d)*sand*u_surf;
+  color=mix(color,color*vec3(.93,.94,.90)+vec3(.005,.018,.013),sheet*.53);
+  float swashEdge=exp(-pow((d-runup)/(1.7+noise(p*.18)*2.),2.))*sand;
+  float bubbling=.55+.45*noise(p*.24+vec2(t*.8,0.));
+  color=mix(color,vec3(1.,1.,.94),swashEdge*bubbling*(.35+.25*max(0.,cos(t*.72)))*u_surf);
+ }
  float glimmer=pow(max(0.,sin(p.x*.12+t*.42)*sin(p.y*.115-t*.33)),30.);
  color+=vec3(.65,.9,1.)*glimmer*.055*water;
  gl_FragColor=vec4(color,1.);

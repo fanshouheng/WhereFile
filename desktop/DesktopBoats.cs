@@ -47,7 +47,7 @@ sealed class DesktopBoats : IDisposable
     }
     async void Poll()
     {
-        if(shell==null||!active||!window.Ready||scanning||disposed)return;
+        if(shell==null||!active||!window.Ready||window.Suspended||scanning||disposed)return;
         // Explorer commits icon positions after mouse-up, sometimes in a later tick.
         // Compare stable Shell positions; foreground windows and mouse polling are not drag evidence.
         if((Control.MouseButtons&MouseButtons.Left)!=0)return;
