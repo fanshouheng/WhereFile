@@ -76,6 +76,8 @@ npm run preview
 
 ## 可选：生成素材
 
+可复用的制作流程在 [wallpaper-theme 技能](skills/wallpaper-theme/SKILL.md)：从主题构图、背景与透明物件提示词，到物件处理和独立动态预览。技能内含通用工具与单独的 WhereFile 接入说明，可用于制作不同主题。
+
 仓库已包含运行素材，无需配置 AI。需要生成新图时，双击 `配置生图.cmd` 配置 PP.dog，使用 `gpt-image-2.5`；提示词在 `prompts/`，生成脚本为 `scripts/imagegen.ps1`。密钥保存在 Git 忽略的 `.local/`，不要提交。
 
 ## 许可

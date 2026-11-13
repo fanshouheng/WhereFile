@@ -1,0 +1,4 @@
+interface:
+  display_name: "动态壁纸主题制作"
+  short_description: "制作不同主题的动态壁纸背景、透明物件与预览，并保留清晰的产品接入边界"
+  default_prompt: "使用 $wallpaper-theme 制作一套新的动态壁纸主题，先确定背景构图、专属物件和运动方式，再交付素材与动态预览。"

@@ -1,0 +1,10 @@
+{
+  "name": "极光湖泊",
+  "background": "background.webp",
+  "sprite": "object.png",
+  "region": [0.42, 0.18, 0.94, 0.86],
+  "object_scale": 0.09,
+  "duration": 48,
+  "motion": "float",
+  "forward_degrees": 0
+}

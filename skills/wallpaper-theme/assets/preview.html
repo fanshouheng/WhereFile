@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>__THEME_TITLE__ · 主题预览</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f8f7;color:#173b43;font:14px/1.6 "Segoe UI","Microsoft YaHei UI",sans-serif}main{max-width:1440px;margin:auto;padding:26px}header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:20px}h1{font-size:24px;font-weight:600;margin:0}header span,footer{color:#63797d;font-size:12px}.scene{position:relative;overflow:hidden;border-radius:14px;isolation:isolate;background:#dbe5e3}.background{display:block;width:100%;height:auto}.object{position:absolute;left:0;top:0;padding:0;border:0;background:none;pointer-events:none;will-change:transform}.object img{display:block;width:100%;height:100%;object-fit:contain}.object span{position:absolute;top:100%;left:50%;translate:-50% 0;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:white;text-shadow:0 1px 3px #000,0 1px 6px #0008}.controls{display:flex;gap:20px 30px;align-items:center;flex-wrap:wrap;margin:22px 0}button,input{font:inherit}button{cursor:pointer;background:#173b43;color:white;border:0;border-radius:7px;padding:9px 18px}button:focus-visible,input:focus-visible{outline:3px solid #117f8b;outline-offset:4px}label{display:flex;align-items:center;gap:10px;font-size:13px}input{accent-color:#117f8b;max-width:120px}footer{border-top:1px solid #dbe5e3;padding-top:17px}.no-labels .object span{display:none}@media(max-width:600px){main{padding:16px}h1{font-size:21px}header{align-items:start}.controls{gap:18px 22px}.controls label{flex-basis:calc(50% - 12px);flex-wrap:wrap}.controls input[type=range]{width:100%}.scene{border-radius:9px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body><main>
+<header><h1>__THEME_TITLE__</h1><span>主题预览</span></header>
+<div class="scene" id="scene"><img class="background" id="background" src="background.webp" alt="__THEME_TITLE__" width="1" height="1"><div class="object"><img src="object.png" alt=""><span>旅行清单.txt</span></div><div class="object"><img src="object.png" alt=""><span>灵感便签.md</span></div></div>
+<div class="controls">
+<button type="button" id="pause" aria-pressed="false">暂停</button>
+<label>物件大小<input id="size" type="range" min="60" max="140" value="100"></label>
+<label>移动速度<input id="speed" type="range" min="0" max="200" value="100"></label>
+<label><input id="labels" type="checkbox" checked>显示名称</label>
+</div>
+<footer>仅预览，不会更改桌面。</footer>
+</main>
+<script id="theme-data" type="application/json">__THEME_JSON__</script>
+<script>
+const config=JSON.parse(document.getElementById('theme-data').textContent);
+const scene=document.getElementById('scene'), background=document.getElementById('background');
+const objects=[...scene.querySelectorAll('.object')], pause=document.getElementById('pause');
+const sizeInput=document.getElementById('size'),speedInput=document.getElementById('speed');
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+background.width=config.width;background.height=config.height;
+let playing=!reduced.matches,elapsed=0,last=0,frameId=0;
+function render(){
+  const w=scene.clientWidth,h=scene.clientHeight,[left,top,right,bottom]=config.region;
+  const rw=(right-left)*w,rh=(bottom-top)*h,labels=!scene.classList.contains('no-labels');
+  const factor=config.motion==='float'?1:Math.SQRT2;
+  objects.forEach((el,index)=>{
+    const label=el.querySelector('span');label.style.maxWidth=Math.min(140,rw)+'px';
+    const labelSpace=labels?label.getBoundingClientRect().height+parseFloat(getComputedStyle(label).marginTop):0;
+    const size=Math.max(1,Math.min(w*config.object_scale*Number(sizeInput.value)/100,rw/factor,Math.max(1,rh-labelSpace)/factor));
+    el.style.width=el.style.height=size+'px';
+    const hx=Math.max(size*factor/2,labels?label.getBoundingClientRect().width/2:0),hy=size*factor/2;
+    const xmin=left*w+hx,xmax=Math.max(xmin,right*w-hx);
+    const ymin=top*h+hy,ymax=Math.max(ymin,bottom*h-hy-labelSpace);
+    const angle=elapsed/config.duration*Math.PI*2+index*Math.PI;
+    const x=xmin+(xmax-xmin)*(.5+.48*Math.sin(angle));
+    const y=ymin+(ymax-ymin)*(.5+.46*Math.sin(angle*2+index*.7));
+    let rotation=0;
+    if(config.motion==='heading')rotation=Math.atan2((ymax-ymin)*.92*Math.cos(angle*2+index*.7),(xmax-xmin)*.48*Math.cos(angle))*180/Math.PI-config.forward_degrees;
+    if(config.motion==='spin')rotation=elapsed*5+index*40;
+    if(config.motion==='sway')rotation=Math.sin(elapsed*2+index)*3;
+    el.style.transform=`translate(${x-size/2}px,${y-size/2}px)`;
+    el.querySelector('img').style.transform=`rotate(${rotation}deg)`;
+  });
+}
+function shouldAnimate(){return playing&&Number(speedInput.value)>0&&!document.hidden;}
+function frame(now){
+  elapsed+=Math.max(0,(now-last)/1000)*Number(speedInput.value)/100;last=now;render();
+  if(shouldAnimate())frameId=requestAnimationFrame(frame);
+}
+function sync(){
+  cancelAnimationFrame(frameId);render();pause.textContent=playing?'暂停':'继续';pause.setAttribute('aria-pressed',String(!playing));
+  if(shouldAnimate()){last=performance.now();frameId=requestAnimationFrame(frame);}
+}
+pause.onclick=()=>{playing=!playing;sync();};
+sizeInput.oninput=sync;speedInput.oninput=sync;
+document.getElementById('labels').onchange=event=>{scene.classList.toggle('no-labels',!event.target.checked);sync();};
+document.addEventListener('visibilitychange',sync);
+reduced.addEventListener('change',event=>{if(event.matches)playing=false;sync();});
+new ResizeObserver(sync).observe(scene);background.onload=sync;sync();
+</script>
+</body></html>
