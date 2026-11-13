@@ -7,6 +7,7 @@
 - 技术栈：原生 JavaScript / WebGL、Node.js 18+ 静态服务器、C# WinForms / WebView2 / .NET Framework 4.6.2+。
 - `npm start`：正式网页，`http://127.0.0.1:4173`；无需安装 npm 依赖。
 - `npm run preview`：独立设计预览，`http://127.0.0.1:4175/previews/interface/`。
+- `npm run site`：官网与真实安装包下载，`http://127.0.0.1:4177`；`npm run site:build` 输出 `output/site`，`npm run site:verify` 验证下载及路径隔离。官网源在 `website/`，Cloudflare Pages 配置在 `wrangler.jsonc`。
 - 桌面构建：`powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build.ps1`；输出 `output/desktop/WhereFile/WhereFile.exe`，`-SkipZip` 可跳过压缩。
 - 单文件安装包：`powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build-installer.ps1`；输出 `output/installer/WhereFile-v<版本>-Setup-x64.exe`。安装到当前用户目录，卸载保留兼容数据目录。
 - 基础检查：`npm run check`，以及 `node scripts/verify-voyage.cjs`、`node scripts/verify-wallpapers.cjs`、`node scripts/verify-motion.cjs`、`node scripts/verify-wallpaper-action.cjs`。

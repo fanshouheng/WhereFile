@@ -3,5 +3,12 @@
   "version": "0.1.3",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node server.mjs", "preview": "node scripts/preview.mjs", "check": "node --check app.js && node --check ocean.js && node --check voyage.js && node --check server.mjs && node --check scripts/preview.mjs" }
+  "scripts": {
+    "start": "node server.mjs",
+    "preview": "node scripts/preview.mjs",
+    "site": "node scripts/site-build.mjs && node scripts/site-server.mjs",
+    "site:build": "node scripts/site-build.mjs",
+    "site:verify": "node scripts/verify-site.cjs",
+    "check": "node --check app.js && node --check ocean.js && node --check voyage.js && node --check server.mjs && node --check scripts/preview.mjs && node --check website/site.js && node --check scripts/site-build.mjs && node --check scripts/site-server.mjs"
+  }
 }

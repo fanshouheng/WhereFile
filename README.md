@@ -50,6 +50,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build-installer.ps1
 
 Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈；正式版与本地修复的区别见 [桌面验证记录](docs/desktop-verification.md)。性能测试条件与适用范围见 [性能验证](docs/performance.md)。
 
+## 官网与安装包下载
+
+```powershell
+npm run site
+```
+
+打开 [http://127.0.0.1:4177](http://127.0.0.1:4177)。中文官网包含文件变船互动示意、三套正式风景、功能与常见问题，以及 0.1.3 安装包的直接下载。网站源在 `website/`，构建与预览独立于正式软件和设计预览。
+
+先执行 `desktop/build-installer.ps1` 准备当前版本安装包，再执行 `npm run site:build`。构建输出为 `output/site`，只包含官网资源、正式素材与安装包；`download.json` 的版本来自 `package.json`，文件大小和 SHA256 来自实际安装包。`npm run site:verify` 会验证完整下载、响应头、哈希及路径隔离。
+
+Cloudflare Pages 可直接上传 `output/site`；配置在 `wrangler.jsonc`。认证并确认 Pages 项目后，执行 `npx wrangler@4.161.0 pages deploy output/site --project-name wherefile --branch master`。这不是 Git 自动构建：安装包在本地生成，不在仓库中，云端只运行 `npm run site:build` 会缺少安装包而失败。也可以设置 `WHEREFILE_DOWNLOAD_URL` 为已发布的 HTTPS 下载地址后构建；外部文件的大小、哈希与可用性不会冒充已验证。
+
+当前官网仅在本地验证，Cloudflare 部署、域名绑定及公网下载验证待完成。
+
 ## 主界面设计预览
 
 ```powershell

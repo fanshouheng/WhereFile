@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f8f7">
+  <meta name="description" content="WhereFile 文件漂走了，把 Windows 桌面文件变成随波漂流的小船。三套动态风景，本机保存，免费下载 Windows 安装包。">
+  <meta property="og:title" content="WhereFile · 文件漂走了">
+  <meta property="og:description" content="把桌面文件拖进海里，变成随波漂流的小船。给每天打开的桌面，留一点远方。">
+  <meta property="og:type" content="website">
+  <title>WhereFile 文件漂走了 — 让桌面有一点远方</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./site.css">
+  <script type="module" src="./site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="WhereFile 首页">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M19 6v23H7L19 6Z" fill="currentColor"/><path d="m22 11 11 18H22V11Z" fill="currentColor" opacity=".45"/><path d="M5 32c4 4 8 4 12 1 4 3 8 3 12 0 2 1 4 1 6 0" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>
+      <span>WhereFile</span>
+    </a>
+    <nav aria-label="主导航">
+      <a class="nav-text" href="#scenery">风景</a>
+      <a class="nav-text" href="#questions">常见问题</a>
+      <a class="nav-github" href="https://github.com/fanshouheng/WhereFile" target="_blank" rel="noopener noreferrer" aria-label="在 GitHub 查看 WhereFile 源码"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 19c-4 1-4-2-6-2m13 5v-3.5a3 3 0 0 0-.8-2.3c2.7-.3 5.5-1.3 5.5-6A4.7 4.7 0 0 0 19.4 7a4.5 4.5 0 0 0-.1-3.1s-1-.3-3.4 1.3a12 12 0 0 0-6.2 0C7.3 3.6 6.3 4 6.3 4A4.5 4.5 0 0 0 6.2 7 4.7 4.7 0 0 0 5 10.3c0 4.7 2.8 5.7 5.5 6a3 3 0 0 0-.8 2.3V22" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a class="button button-small" href="#download">下载 Windows 版 <span aria-hidden="true">↓</span></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="landscape" id="landscape" data-scene="tropical">
+        <img class="landscape-image" id="hero-image" src="./assets/coast-hd.webp" alt="阳光下的热带海湾，左边是沙滩，右边是清澈海水" fetchpriority="high" width="1672" height="941">
+        <div class="sea-shimmer" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <h1 id="hero-title">让文件，<br>漂进风景里。</h1>
+          <p>桌面是一片海，文件是远行的小船。</p>
+          <a class="button button-white" data-download href="#download"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M9 3H3v6h6V3Zm8 0h-6v6h6V3ZM9 11H3v6h6v-6Zm8 0h-6v6h6v-6Z" fill="currentColor"/></svg>免费下载 Windows 版</a>
+          <span class="hero-requirement">Windows 10 / 11，64 位</span>
+        </div>
+
+        <div class="shore-files" aria-hidden="true">
+          <div class="shore-file"><span class="folder-icon"></span><span>我的收藏</span></div>
+          <div class="shore-file"><span class="document-icon"><i></i><i></i><i></i></span><span>灵感笔记.md</span></div>
+        </div>
+        <button class="demo-file" id="demo-file" type="button" aria-label="将示意文件旅行清单.txt 放入海里">
+          <span class="demo-file-icon document-icon"><i></i><i></i><i></i></span>
+          <img class="demo-file-boat" src="./assets/boat-hd.png" alt="" width="112" height="112" draggable="false">
+          <span class="demo-file-label">旅行清单.txt</span>
+        </button>
+        <div class="demo-hint" id="demo-hint"><svg viewBox="0 0 56 36" fill="none" aria-hidden="true"><path d="M3 28c17 2 21-24 44-20m-9-6 11 6-9 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>把它拖进海里试试</span></div>
+        <div class="floating-boat boat-one" aria-hidden="true"><img src="./assets/boat-hd.png" alt="" width="112" height="112"><span>周末的计划.txt</span></div>
+        <div class="floating-boat boat-two" aria-hidden="true"><img src="./assets/boat-hd.png" alt="" width="112" height="112"><span>慢慢来.pdf</span></div>
+
+        <div class="scene-controls" role="group" aria-label="切换首屏风景">
+          <button class="scene-choice" type="button" data-scene="tropical" aria-pressed="true"><span style="background-image:url('./assets/coast-hd.webp')"></span><span>热带海湾</span></button>
+          <button class="scene-choice" type="button" data-scene="snow" aria-pressed="false"><span style="background-image:url('./assets/coast-snow.webp')"></span><span>雪松湖岸</span></button>
+          <button class="scene-choice" type="button" data-scene="autumn" aria-pressed="false"><span style="background-image:url('./assets/coast-autumn.webp')"></span><span>秋日湖畔</span></button>
+        </div>
+        <button class="motion-toggle" id="motion-toggle" type="button" aria-pressed="false" aria-label="暂停风景动画"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4v12M14 4v12"/></svg><span>暂停</span></button>
+        <span class="demo-caption">网页互动示意</span>
+      </div>
+      <div class="hero-foot"><span>文件漂走了，生活慢下来了。</span><a href="#how-it-works">看看它怎么工作 <span aria-hidden="true">↓</span></a></div>
+      <p class="sr-only" id="demo-status" role="status"></p>
+    </section>
+
+    <section class="intro content-width" id="how-it-works" aria-labelledby="intro-title">
+      <div class="intro-heading"><h2 id="intro-title">文件还在原处，<br>心情已经出海。</h2><p>把桌面的文件、文件夹或快捷方式拖向海面，<br class="desktop-break">它就变成一艘小船，随波慢慢漂流。<br>想用的时候，像平常一样打开。</p></div>
+      <div class="features">
+        <article><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m11 4 15 15-9 1-4 8L7 7l4-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m3 3 2 2m10-4v3M1 14h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><h3>双击，打开原文件</h3><p>小船链接着真实文件。名称随船同行，<br>熟悉的文件，换一种陪伴。</p></article>
+        <article><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M5 11h18m-6-6 6 6-6 6M27 23H9m6-6-6 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>回到岸边，图标就回来</h3><p>拖回岸边，恢复原来的桌面图标。<br>文件始终留在原处，不搬家。</p></article>
+        <article><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="5" width="26" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M11 28h10m-5-5v5M13 10v8m6-8v8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><h3>忙的时候，风景也休息</h3><p>前台窗口最大化或全屏覆盖主屏时暂停，<br>回到桌面，接着漂流。</p></article>
+      </div>
+    </section>
+
+    <section class="scenery-section" id="scenery" aria-labelledby="scenery-title">
+      <div class="content-width">
+        <div class="section-heading"><div><h2 id="scenery-title">今天，想去哪里？</h2><p>三处风景，随时换一种心情。</p></div><span class="quiet-note">已包含在当前版本</span></div>
+        <div class="scenery-grid">
+          <button class="scenery-card" type="button" data-preview="tropical" aria-label="在首屏预览热带海湾"><div class="scenery-image"><img src="./assets/coast-hd.webp" alt="椰树与阳伞旁的热带海湾" width="1672" height="941" loading="lazy"><img class="scenery-boat" src="./assets/boat-hd.png" alt="" width="84" height="84" loading="lazy"></div><span class="scenery-name">热带海湾 <span>阳光，海风，还有慢悠悠的一天。</span></span><span class="preview-arrow" aria-hidden="true">↗</span></button>
+          <button class="scenery-card" type="button" data-preview="snow" aria-label="在首屏预览雪松湖岸"><div class="scenery-image"><img src="./assets/coast-snow.webp" alt="覆雪松林旁的蓝色湖岸" width="1672" height="941" loading="lazy"><img class="scenery-boat" src="./assets/boat-hd.png" alt="" width="84" height="84" loading="lazy"></div><span class="scenery-name">雪松湖岸 <span>把喧闹留远一点，把安静留下。</span></span><span class="preview-arrow" aria-hidden="true">↗</span></button>
+          <button class="scenery-card" type="button" data-preview="autumn" aria-label="在首屏预览秋日湖畔"><div class="scenery-image"><img src="./assets/coast-autumn.webp" alt="暖色秋叶围绕的湖畔" width="1672" height="941" loading="lazy"><img class="scenery-boat" src="./assets/boat-hd.png" alt="" width="84" height="84" loading="lazy"></div><span class="scenery-name">秋日湖畔 <span>给桌面添一点暖，给日常留一点闲。</span></span><span class="preview-arrow" aria-hidden="true">↗</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="download-section content-width" id="download" aria-labelledby="download-title">
+      <div class="download-art" aria-hidden="true"><img src="./assets/boat-hd.png" alt="" width="320" height="320" loading="lazy"><span class="ripple ripple-one"></span><span class="ripple ripple-two"></span></div>
+      <div class="download-copy"><h2 id="download-title">给桌面放个假。</h2><p>一片海，几艘小船。<br>下次打开电脑，就能看见。</p><a class="button button-download" data-download href="#download"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2v11m0 0 4-4m-4 4L6 9M3 14v4h14v-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>免费下载 Windows 版</a><p class="download-meta" id="download-meta">Windows 10 / 11，64 位</p><p class="download-error" id="download-error" role="status" hidden>安装包暂时无法获取。<a href="https://github.com/fanshouheng/WhereFile/releases">查看 GitHub 发布页</a></p><p class="install-note">单个 EXE，双击安装。无需注册，无需管理员权限。<br>缺少 WebView2 运行环境时，安装程序会联网补齐。</p></div>
+    </section>
+
+    <section class="faq-section content-width" id="questions" aria-labelledby="faq-title">
+      <div class="faq-heading"><h2 id="faq-title">你可能还想知道</h2><a href="https://github.com/fanshouheng/WhereFile/issues" target="_blank" rel="noopener noreferrer">还有问题？到 GitHub 聊聊 <span aria-hidden="true">↗</span></a></div>
+      <div class="faq-list">
+        <details><summary>我的文件会被移动或上传吗？</summary><p>桌面小船链接原文件，软件会读取桌面文件的名称、路径和图标信息，用于显示和打开文件。转换成小船不会移动、重命名或改写原文件，也不会上传文件。通过管理窗口导入的文件副本保存在本机。</p></details>
+        <details><summary>支持哪些电脑？可以用多个显示器吗？</summary><p>支持 Windows 10（1607 及以上）和 Windows 11 的 64 位电脑，当前只覆盖主显示器。需要 .NET Framework 4.6.2+ 和 Microsoft Edge WebView2 Runtime；缺少 WebView2 时安装程序会联网安装。macOS 暂不支持。</p></details>
+        <details><summary>会不会影响玩游戏或工作？</summary><p>前台应用最大化或全屏覆盖主显示器、系统锁屏时，WhereFile 会暂停动画与桌面轮询，回到桌面后恢复。也可以随时在托盘里手动暂停。具体占用会随电脑配置和分辨率变化。</p></details>
+        <details><summary>为什么文件拖进海里，没有变成小船？</summary><p>请先在管理窗口点击“设为桌面壁纸”，并关闭 Windows 桌面的“自动排列图标”。当前支持主显示器上的真实文件、文件夹和快捷方式；回收站、此电脑等系统图标暂不转换。</p></details>
+        <details><summary>退出或卸载后，桌面会恢复吗？</summary><p>正常退出会恢复桌面图标。安装程序在升级或卸载前会通知 WhereFile 退出；若程序仍在运行，会提示先从托盘退出后重试。卸载保留本机文件库和设置，不删除原文件。</p></details>
+        <details><summary>安装时出现 Windows 安全提示怎么办？</summary><p>当前安装包尚未进行代码签名，Windows 可能会显示发布者未知的提示。请核对下载来源与安装包校验值；有疑问时先取消安装。源码可在 GitHub 查看，也可以在那里反馈。</p></details>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer content-width"><a class="brand footer-brand" href="#"><svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M19 6v23H7L19 6Z" fill="currentColor"/><path d="m22 11 11 18H22V11Z" fill="currentColor" opacity=".45"/><path d="M5 32c4 4 8 4 12 1 4 3 8 3 12 0 2 1 4 1 6 0" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg><span>WhereFile</span></a><span class="footer-tagline">给每天打开的桌面，留一点远方。</span><div><a href="https://github.com/fanshouheng/WhereFile" target="_blank" rel="noopener noreferrer">开源代码</a><a href="https://github.com/fanshouheng/WhereFile/issues" target="_blank" rel="noopener noreferrer">反馈问题</a><a id="checksum-link" href="./downloads/SHA256SUMS.txt">安装包校验</a></div><span class="copyright">© 2026 WhereFile</span></footer>
+</body>
+</html>
