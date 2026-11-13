@@ -1,4 +1,13 @@
-# 海屿桌面版验证 · 2026-11-10
+# WhereFile 桌面版验证
+
+## 2026-11-13 状态核对
+
+- GitHub 最新正式版为 [v0.1.2](https://github.com/fanshouheng/WhereFile/releases/tag/v0.1.2)，标签与远端 `master` 均指向 `f92bc16`。发布包尚未包含本地 `4970a56` 的按钮反馈及 Windows 11 层级修复；该修复提交尚未推送。
+- 本地构建的五个网页入口文件与源码哈希一致；`output/desktop/WhereFile-Win11-layering-test.zip` 是供复测的测试包，不是正式发布。当前构建标识为 `win11-layering-20261113`。
+- 本次重新通过语法、航行、三套壁纸边界、帧率/挂起、按钮反馈、资源访问及 `verify-desktop-host.ps1 -LayerOnly` 检查。`127.0.0.1:4173` 返回 WhereFile 页面，所服务的 `app.js` 与当前源码一致。
+- 2026-11-13 用户反馈“真实win11测试没问题了”，据此将真实 Windows 11 复测标为通过。证据来自用户实机反馈，本次收尾未独立操作该机器；未记录其具体 Windows 11 版本、构建号或测试步骤，不扩大为所有 Windows 11 版本与交互的验收。
+- 本次收尾未运行原生桌面宿主或操作真实图标，以下本机桌面交互与性能结果均为带日期的历史记录。修复版正式发布仍为 `pending`，实机通过不代表已经推送或发布。
+- `%LOCALAPPDATA%\HaiyuWallpaper` 是现用兼容数据目录，并非旧品牌残留。复测前先从托盘退出旧实例，再用 `host.log` 和 `status.json.hostBuild` 核对实际构建；不要删除用户数据来确认升级。
 
 ## 2026-11-13 “设为桌面壁纸”无反馈排查
 
@@ -8,12 +17,12 @@
 - Edge 真实浏览器通过模拟宿主消息检查等待、失败、关闭后重试及无响应弹窗，无控制台错误；截图在 `output/playwright/wallpaper-failure.png`。这是前端反馈验证，不代表在浏览器中完成系统壁纸设置。
 - `scripts/verify-desktop-host.ps1` 通过：Windows 10 build 19045、WebView2 157.0.4341.46，使用与发布程序相同的清单，通过真实 WebView 页面按钮触发宿主，成功附着 WorkerW，文件变船、移动、换景和靠岸恢复通过。临时文件已清理，恢复记录为 `[]`。
 - 回归期间最大化的前台应用曾触发预期的暂停，使移动测试失败。测试现暂时聚焦桌面并在结束后恢复先前前台窗口，测试期间没有关闭用户应用。
-- 仍需反馈用户提供 Windows 版本、点击后的具体表现，以及 `%LOCALAPPDATA%\HaiyuWallpaper` 下的 `host.log`、`status.json`。本机通过不等于已验证 Windows 11 各版本或用户的桌面层结构。
+- 首次排查时尚缺反馈用户的 Windows 版本和日志；后续已收到 Windows 11 日志，分析见下一节；新版实机复测反馈见顶部状态核对。本机通过不等于已验证 Windows 11 各版本或对方的桌面层结构。
 
 ## 2026-11-13 Windows 11 日志跟进与层级修复
 
 - 用户提供的日志确认多次 `SetParent` 返回 `win32Error=0`，实际父窗口为 `Progman`；状态为 `ready=true`、`mode=wallpaper`、`suspended=false`、`nativeVisible=true`、2560×1600、144 DPI、无异常。因此请求确已到达宿主，不能把现象归因于按钮未响应、缺少 WebView2 或 DPI 不一致。
-- 旧实现找不到顶层 WorkerW 时回退至 Progman，并始终使用 HWND_BOTTOM。部分 Windows 11 的桌面图标和原壁纸 WorkerW 都是 Progman 的子窗口，放到底部会被原壁纸遮挡。用户旧日志没有记录子窗口结构，尚需新版复测确认其机器确实命中这一分支。
+- 旧实现找不到顶层 WorkerW 时回退至 Progman，并始终使用 HWND_BOTTOM。部分 Windows 11 的桌面图标和原壁纸 WorkerW 都是 Progman 的子窗口，放到底部会被原壁纸遮挡。用户旧日志没有记录子窗口结构，不能仅凭旧日志确认其机器确实命中这一分支；新版实机复测反馈见顶部状态核对。
 - 按桌面结构选择附着方式：传统桌面保留独立 WorkerW；嵌套桌面使用不透明的 WS_EX_LAYERED 子窗口，紧邻图标层下方、原壁纸上方。完整桌面层不可用时返回错误，不再盲目回退 Progman。管理模式恢复原窗口样式。
 - 使用 0x052C / 0xD / 1 请求桌面层，不成功时兼容旧参数；记录 Progman 样式、图标层、子 WorkerW、传统 WorkerW、选中的父窗口及插入位置。状态增加构建标识 `win11-layering-20261113`、分层样式和相邻窗口类名，方便确认实际运行的版本和层级。
 - `scripts/verify-desktop-host.ps1 -LayerOnly` 验证传统布局、嵌套布局、存在无关顶层 WorkerW、桌面结构不完整及旧 Progman 错误回退。此测试验证布局选择，不等同于真实 Win11 的合成画面验收。
