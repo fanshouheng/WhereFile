@@ -38,6 +38,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build.ps1
 
 运行 `output/desktop/WhereFile/WhereFile.exe`，在管理窗口点击“设为桌面壁纸”。也可以双击 `启动WhereFile壁纸.cmd`，首次启动会自动构建。构建后日常使用无需 Node.js、Python 或生图 API Key。
 
+构建单文件 EXE 安装包：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build-installer.ps1
+```
+
+当前输出为 `output/installer/WhereFile-v0.1.3-Setup-x64.exe`，下载这一个文件即可安装，无需解压。默认安装到 `%LOCALAPPDATA%\Programs\WhereFile`，无需管理员权限；提供开始菜单快捷方式和 Windows 卸载入口，卸载保留本机文件库与设置。缺少 WebView2 时会自动联网安装运行环境。
+
+构建工具仅解包到忽略的 `output/build-deps/installer/`，不安装到系统；首次构建需联网。0.1.3 安装包目前为本地产物，尚未上传 Releases；上面的正式下载入口仍提供 0.1.2 免安装包。
+
 Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈；正式版与本地修复的区别见 [桌面验证记录](docs/desktop-verification.md)。性能测试条件与适用范围见 [性能验证](docs/performance.md)。
 
 ## 主界面设计预览

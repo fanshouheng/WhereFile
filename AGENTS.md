@@ -8,6 +8,7 @@
 - `npm start`：正式网页，`http://127.0.0.1:4173`；无需安装 npm 依赖。
 - `npm run preview`：独立设计预览，`http://127.0.0.1:4175/previews/interface/`。
 - 桌面构建：`powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build.ps1`；输出 `output/desktop/WhereFile/WhereFile.exe`，`-SkipZip` 可跳过压缩。
+- 单文件安装包：`powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build-installer.ps1`；输出 `output/installer/WhereFile-v<版本>-Setup-x64.exe`。安装到当前用户目录，卸载保留兼容数据目录。
 - 基础检查：`npm run check`，以及 `node scripts/verify-voyage.cjs`、`node scripts/verify-wallpapers.cjs`、`node scripts/verify-motion.cjs`、`node scripts/verify-wallpaper-action.cjs`。
 - 资源访问检查：先启动正式网页，再执行 `node scripts/verify-server.cjs`。
 - 桌面构建后可执行 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-desktop-host.ps1 -LayerOnly`，仅验证布局选择。
