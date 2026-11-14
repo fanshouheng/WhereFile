@@ -20,12 +20,15 @@ for (const [name, filename, text] of [
 ]) makeFolder(name, [{ path: filename, file: new File([text], filename, { type: 'text/plain' }) }], true);
 
 function area(folder) {
-  const rect = scene.getBoundingClientRect(), mobile = matchMedia('(max-width: 760px)').matches;
-  const [left, top, right, bottom] = mobile ? [.15, .52, .9, .9] : [.36, .42, .94, .87];
-  const halfW = (folder?.el?.offsetWidth || (mobile ? 74 : 92)) / 2 / rect.width;
-  const halfH = (folder?.el?.offsetHeight || (mobile ? 88 : 108)) / 2 / rect.height;
+  const rect = scene.getBoundingClientRect();
+  const [left, top, right, bottom] = [.36, .50, .94, .87];
+  const size = folder?.el?.offsetWidth || clamp(innerWidth * .068, 36, 96);
+  const label = folder?.el?.querySelector('.sheep-name');
+  const halfW = Math.max(size / 2, (label?.offsetWidth || clamp(innerWidth * .085, 60, 120)) / 2 + size * .18) / rect.width;
+  const halfH = size / 2 / rect.height;
+  const headroom = (size / 2 + (label?.offsetHeight || 21) + 3) / rect.height;
   return { left: Math.min(left + halfW, (left + right) / 2), right: Math.max(right - halfW, (left + right) / 2),
-    top: Math.min(top + halfH, (top + bottom) / 2), bottom: Math.max(bottom - halfH, (top + bottom) / 2) };
+    top: Math.min(top + headroom, (top + bottom) / 2), bottom: Math.max(bottom - halfH, (top + bottom) / 2) };
 }
 function point(clientX, clientY) {
   const rect = scene.getBoundingClientRect();
@@ -40,6 +43,7 @@ function place(folder) {
   folder.el.style.left = `${folder.x * 100}%`;
   folder.el.style.top = `${folder.y * 100}%`;
   folder.el.querySelector('img').style.transform = `scaleX(${folder.direction})`;
+  folder.el.style.setProperty('--head-x', folder.direction === 1 ? '68%' : '32%');
 }
 function fit(folder) {
   const box = area(folder);
@@ -84,6 +88,8 @@ function ghostAt(clientX, clientY) {
     const ghost = document.createElement('div'); ghost.className = 'drag-ghost'; ghost.setAttribute('aria-hidden', 'true');
     const image = document.createElement('img'); image.src = './assets/sheep.png'; image.alt = ''; image.draggable = false;
     const label = document.createElement('span'); label.className = 'ghost-name'; label.textContent = drag.folder.name;
+    image.style.transform = `scaleX(${drag.folder.direction})`;
+    ghost.style.setProperty('--head-x', drag.folder.direction === 1 ? '68%' : '32%');
     ghost.append(image, label); document.body.append(ghost); drag.ghost = ghost;
     ghost.style.position = 'fixed'; ghost.style.pointerEvents = 'none'; ghost.style.zIndex = '1000';
   }

@@ -6,22 +6,22 @@
 
 ## 操作
 
-- 点击狼堡，拖动其中一个示例文件夹到右侧草原。
+- 点击地图中固定的狼堡，拖动其中一个示例文件夹到右侧草原。
 - 双击小羊查看文件夹内容，拖回狼堡或在查看窗口中点击“收回狼堡”。
-- 小羊在草地范围内缓慢漫游并间歇停留，只左右转向，不整图旋转。支持暂停、后台暂停与系统减少动态偏好。
+- 小羊在草地范围内缓慢漫游并间歇停留，只左右转向，不整图旋转。文件名位于羊头上方，随朝向换位但保持文字正向。支持暂停、后台暂停与系统减少动态偏好。
 - 键盘聚焦文件夹或小羊，空格拿起、方向键移动、Enter 放下、Esc 取消；未拿起时 Enter 打开内容。
 - “添加文件夹”使用浏览器目录选择器。内容仅留在当前页面内存；刷新后重置，不上传、移动或改写原文件。浏览器查看的是所选文件内容，不会打开资源管理器的原路径。文本与图片可预览，其他格式可下载副本。
 
 ## 素材与配置
 
-运行素材在 `assets/`：`grassland.webp` 为背景，`wolfcastle.png` 和 `sheep.png` 为独立透明物件。原图保存在忽略目录 `output/imagegen/theme-grassland-*.png`；生成沿用获授权的 PP.dog / `gpt-image-2.5`，通过 imagegen 技能的 CLI 完成。物件用纯绿背景生成后经 `skills/wallpaper-theme/scripts/prepare_sprite.py` 抠图，检查浅色与深色底边缘。
+运行素材在 `assets/`：`grassland.webp` 是狼堡与草原一体生成的完整背景，`sheep.png` 是独立透明物件。狼堡参考用户提供的紫色方塔、粉红尖顶、侧塔与爪印造型，地基、草坡、灌木和土路一起绘制；运行时没有独立城堡图片或可移动城堡层。原图与先前版本保存在忽略目录 `output/imagegen/`。生成沿用获授权的 PP.dog / `gpt-image-2.5`，通过 imagegen 技能的 CLI 完成；`scripts/imagegen.ps1 -ReferenceImage` 可传入参考图，以编辑模式保持背景构图。小羊使用 `skills/wallpaper-theme/scripts/prepare_sprite.py` 抠图，已检查浅色与深色底边缘。
 
-提示词：[草原](../../prompts/theme-grassland-background.txt)、[狼堡](../../prompts/theme-grassland-wolfcastle.txt)、[小羊](../../prompts/theme-grassland-sheep.txt)。
+提示词：[狼堡与草原一体背景](../../prompts/theme-grassland-background.txt)、[小羊](../../prompts/theme-grassland-sheep.txt)。背景提示词的三张输入依次为草原初稿和用户提供的两张建筑参考；参考图的夜景、树枝、文字与水印不用于输出。
 
-`grassland.js` 的 `area()` 定义草原活动区域：桌面 `[0.36, 0.42, 0.94, 0.87]`，窄屏 `[0.15, 0.52, 0.9, 0.9]`，另扣除物件尺寸留边。漫游、暂停、文件夹状态与拖动行为均在同一文件中；`grassland.css` 定义场景与物件尺寸。
+地图在所有窗口宽度都按原图 `1672:941` 完整显示，避免裁切导致城堡入口错位。`grassland.css` 的透明城堡热区为 `[0.12, 0.035, 0.33, 0.535]`；`grassland.js` 的 `area()` 定义草原活动区域 `[0.36, 0.50, 0.94, 0.87]`，另预留物件和头顶名称的空间。漫游、暂停、文件夹状态与拖动行为均在同一文件中。
 
 ## 验证
 
-2026-11-14 已通过 Edge 浏览器的拖出、双击查看、拖回、无效落点、Esc 取消、键盘操作、漫游、暂停与减少动态偏好检查；1920、1440、796、761、760、390、320 像素宽度无横向溢出，小羊及名称位于场景内。最终截图在 `output/playwright/grassland/final-desktop.png` 和 `final-mobile.png`。
+2026-11-14 在 Codex 内置浏览器复测了点击背景狼堡、拖出、双击查看、拖回门口、键盘操作、暂停及左右转向后的羊头标签。1440、390、320 像素宽度地图完整、热区对齐、无横向溢出，小羊及名称均位于场景内。当前截图在 `output/playwright/grassland/integrated-iab.jpg`，布局数据在 `integrated-iab-checks.json`。后续浏览器测试使用内置浏览器。
 
 使用带目录相对路径的 FileList 验证了嵌套文件、长目录名、HTML 纯文本展示、图片预览与下载副本。下载的二进制副本与测试内容逐字节一致。Playwright 向 Edge 目录输入传文件时超时，真实目录选择器尚待手工验收；未将注入 FileList 的检查当作真实选择目录验证。

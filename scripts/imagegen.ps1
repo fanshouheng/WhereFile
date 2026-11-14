@@ -1,7 +1,8 @@
 ﻿param(
     [ValidateSet('Check', 'Generate')][string]$Action = 'Check',
     [ValidateSet('coast', 'boat', 'boat-directions', 'coast-snow', 'coast-autumn', 'scene-space', 'scene-desert', 'object-meteorite', 'object-tornado', 'scene-space-miniature', 'scene-desert-miniature', 'scene-space-lined', 'scene-desert-lined', 'scene-space-pixel', 'scene-desert-pixel', 'scene-space-surface', 'theme-grassland-background', 'theme-grassland-wolfcastle', 'theme-grassland-sheep')][string]$Asset = 'boat',
-    [switch]$DryRun
+    [switch]$DryRun,
+    [string[]]$ReferenceImage
 )
 $ErrorActionPreference = 'Stop'
 $islandRoot = Split-Path $PSScriptRoot -Parent
@@ -55,9 +56,14 @@ try {
     $promptPath = Join-Path $islandRoot "prompts/$Asset.txt"
     $outputPath = Join-Path $islandRoot "output/imagegen/$Asset.png"
     if (-not $DryRun -and (Test-Path -LiteralPath $outputPath)) { throw "已有素材：$outputPath。请先另存或改名再生成。" }
-    $cliArguments = @('-X', 'utf8', $cliPath, 'generate', '--model', $model,
+    $imageCommand = if ($ReferenceImage) { 'edit' } else { 'generate' }
+    $cliArguments = @('-X', 'utf8', $cliPath, $imageCommand, '--model', $model,
         '--prompt-file', $promptPath, '--size', $size, '--quality', 'high',
         '--output-format', 'png', '--no-augment', '--out', $outputPath)
+    foreach ($image in $ReferenceImage) {
+        if (-not (Test-Path -LiteralPath $image -PathType Leaf)) { throw "未找到参考图片：$image" }
+        $cliArguments += @('--image', (Resolve-Path -LiteralPath $image).Path)
+    }
     if ($DryRun) { $cliArguments += '--dry-run' }
     Write-Output "服务：$baseUrl；模型：$model；素材：$Asset；尺寸：$size"
     # Invoke the bundled CLI; credentials stay in the child process environment.

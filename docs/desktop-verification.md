@@ -2,10 +2,10 @@
 
 ## 2026-11-14 青青草原 · 狼堡独立预览
 
-- 新增 `previews/grassland/`，通过 `npm run preview` 的 `/previews/grassland/` 访问。背景、狼堡与小羊使用本次实际生成素材，物件已抠为透明 PNG 并检查浅色、深色底边缘。
-- Edge 实测文件夹拖出变同名小羊、双击查看文件、拖回收纳、无效落点与 Esc 取消、键盘拿起/移动/放下，以及漫游、暂停和减少动态偏好通过。1920、1440、796、761、760、390、320 像素宽度无横向溢出，小羊与名称未越出场景，无页面错误。
+- `previews/grassland/` 通过 `npm run preview` 的 `/previews/grassland/` 访问。按用户反馈改为狼堡与草原一体生成，参考用户提供的紫色方塔、粉红尖顶与爪印造型；移除独立城堡贴图，透明点击/收纳区域固定对齐背景，地图在窄屏也完整显示。小羊为独立透明 PNG，名称移到头顶并随左右朝向换位。
+- 初版 Edge 测试覆盖拖出、双击、收纳、取消、键盘、漫游和暂停；此次修改后使用 Codex 内置浏览器重新验证点击背景狼堡、拖出、双击查看、拖回门口、键盘操作、暂停与左右转向标签。1440、390、320 像素宽度地图比例和热区位置一致，无横向溢出，小羊与头顶名称未越出场景。当前截图为 `output/playwright/grassland/integrated-iab.jpg`，布局数据为 `integrated-iab-checks.json`；后续测试使用内置浏览器。
 - 带目录相对路径的 FileList 验证了嵌套文件、长目录名、HTML 纯文本展示、图片预览、下载副本与收回；下载二进制与测试内容一致。Playwright 原生目录上传在 Edge 中超时，真实目录选择器未完成验收，未以数据注入替代此结论。
-- `node --check previews/grassland/grassland.js`、`npm run check`、生图脚本 DryRun 通过。最终截图在 `output/playwright/grassland/final-desktop.png` 与 `final-mobile.png`。本次未运行桌面宿主、操作桌面图标、构建安装包或部署官网；这是独立主题交互验证。
+- `node --check previews/grassland/grassland.js`、`npm run check`、含三张参考输入的生图脚本 DryRun 通过。本次未运行桌面宿主、操作桌面图标、构建安装包或部署官网；这是独立主题交互验证。
 
 ## 2026-11-13 状态核对
 

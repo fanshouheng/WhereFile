@@ -16,15 +16,12 @@
   </header>
   <main>
     <section id="scene" class="scene" aria-label="青青草原与狼堡互动预览">
-      <img class="scene-background" src="./assets/grassland.webp" alt="阳光下的青青草原，远处有连绵的山丘和白云" width="1672" height="941">
-      <div class="cloud-shadow" aria-hidden="true"></div>
+      <img class="scene-background" src="./assets/grassland.webp?v=wolfcastle-reference" alt="青青草原左侧是紫色方塔、粉红尖顶的狼堡，城堡地基与草坡相连，右侧是开阔牧场" width="1672" height="941">
       <button id="castle" class="castle" type="button" aria-label="打开狼堡里的文件夹" aria-expanded="false" aria-controls="storage-panel">
-        <img src="./assets/wolfcastle.png" alt="" width="512" height="512" draggable="false">
-        <span class="castle-label">狼堡 <span id="castle-count" class="castle-count">3</span></span>
       </button>
       <div id="pasture" class="pasture" aria-label="草原上的小羊"></div>
       <aside id="storage-panel" class="storage-panel" aria-labelledby="storage-title" hidden>
-        <div class="panel-heading"><h2 id="storage-title">狼堡</h2><button id="close-storage" type="button" aria-label="关闭狼堡">×</button></div>
+        <div class="panel-heading"><h2 id="storage-title">狼堡 <span id="castle-count" class="castle-count">3</span></h2><button id="close-storage" type="button" aria-label="关闭狼堡">×</button></div>
         <div id="folder-list" class="folder-list"></div>
         <p class="storage-hint">拖到草原，就变成一只小羊。</p>
       </aside>
