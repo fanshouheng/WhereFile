@@ -25,6 +25,19 @@ const { pathToFileURL } = require('node:url');
   try {
     assert.equal((await request('/')).status, 200);
     assert.equal((await request('/assets/coast-hd.webp')).status, 200);
+    for (const [file, mime] of [['index.html', 'text/html'], ['grassland.css', 'text/css'],
+      ['grassland.js', 'text/javascript'], ['assets/grassland.webp', 'image/webp'], ['assets/sheep.png', 'image/png']]) {
+      const response = await request('/previews/grassland/' + file);
+      assert.equal(response.status, 200, file);
+      assert.ok(response.headers['content-type'].startsWith(mime), file);
+      assert.ok(response.body.equals(await fs.readFile(path.join(root, 'previews/grassland', file))), `Stale theme resource: ${file}`);
+    }
+    assert.equal((await request('/previews/grassland/')).status, 200);
+    assert.equal((await request('/themes/grassland.webp')).status, 200);
+    for (const file of ['README.md', 'prompts/theme-grassland-background.txt', 'assets/wolfcastle.png']) {
+      assert.equal((await request('/previews/grassland/' + file)).status, 404);
+    }
+    console.log('PASS: complete grassland preview, current runtime assets and public resource allowlist.');
     const metadataResponse = await request('/download.json');
     assert.equal(metadataResponse.status, 200);
     const metadata = JSON.parse(metadataResponse.body);

@@ -31,6 +31,11 @@ export async function buildSite() {
   for (const asset of ['coast-hd.webp', 'coast-snow.webp', 'coast-autumn.webp', 'boat-hd.png']) {
     await copyFile(path.join(root, 'assets', asset), path.join(output, 'assets', asset));
   }
+  const grassland = path.join(output, 'previews/grassland');
+  await mkdir(path.join(grassland, 'assets'), { recursive: true });
+  for (const file of ['index.html', 'grassland.css', 'grassland.js', 'assets/grassland.webp', 'assets/sheep.png']) {
+    await copyFile(path.join(root, 'previews/grassland', file), path.join(grassland, file));
+  }
   await writeFile(path.join(output, 'download.json'), JSON.stringify(download, null, 2) + '\n');
   console.log(`WhereFile website: ${output}`);
   console.log(externalUrl ? `External download URL (not verified): ${externalUrl}` : `Installer: ${filename} (${download.size} bytes)`);
