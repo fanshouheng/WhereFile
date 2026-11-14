@@ -4,6 +4,7 @@ import { makeZip } from './zip.mjs';
 const PREFIX = '/api/workshop';
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
 const MAX_UPLOAD = 11 * 1024 * 1024;
+const MAX_STORED_BYTES = 900 * 1024 * 1024;
 const encoder = new TextEncoder();
 const privateHeaders = {
   'Cache-Control': 'no-store',
@@ -13,10 +14,10 @@ const privateHeaders = {
 };
 
 class ApiError extends Error {
-  constructor(status, code, message) { super(message); this.status = status; this.code = code; }
+  constructor(status, code, message, headers = {}) { super(message); this.status = status; this.code = code; this.headers = headers; }
 }
 
-function fail(status, code, message) { throw new ApiError(status, code, message); }
+function fail(status, code, message, headers) { throw new ApiError(status, code, message, headers); }
 function json(value, status = 200, extra = {}) {
   return new Response(JSON.stringify(value), { status, headers: { ...privateHeaders, 'Content-Type': 'application/json; charset=utf-8', ...extra } });
 }
@@ -126,26 +127,31 @@ async function rowFor(env, id, onlyApproved = false) {
   if (!row) fail(404, 'not_found', '没有找到这个主题。');
   return row;
 }
+async function readAsset(env, row, key) {
+  let buffer;
+  try { buffer = await env.THEME_ASSETS.get(`${row.id}/${key}`, { type: 'arrayBuffer' }); }
+  catch { fail(503, 'storage_unavailable', '素材暂时无法读取，请稍后重试。', { 'Retry-After': '60' }); }
+  const size = key === 'sprite' ? row.sprite_size : row.background_size;
+  if (!buffer || buffer.byteLength !== size) fail(503, 'assets_syncing', '素材仍在同步，请稍后重试。', { 'Retry-After': '60' });
+  return new Uint8Array(buffer);
+}
 async function asset(request, env, row, key, isPrivate = false) {
-  const object = request.method === 'HEAD' ? await env.THEME_ASSETS.head(`${row.id}/${key}`) : await env.THEME_ASSETS.get(`${row.id}/${key}`);
-  if (!object) fail(404, 'not_found', '没有找到这个主题素材。');
-  return new Response(request.method === 'HEAD' ? null : object.body, { headers: {
+  const bytes = await readAsset(env, row, key);
+  return new Response(request.method === 'HEAD' ? null : bytes, { headers: {
     ...privateHeaders,
     'Content-Type': key === 'sprite' ? 'image/png' : row.background_type,
-    'Content-Length': String(object.size),
+    'Content-Length': String(bytes.byteLength),
     'Cache-Control': isPrivate ? 'no-store' : 'public, max-age=60',
-    ...(object.httpEtag ? { ETag: object.httpEtag } : {}),
   } });
 }
 async function download(request, env, row) {
   const config = JSON.parse(row.config_json);
-  const [background, sprite] = await Promise.all([env.THEME_ASSETS.get(`${row.id}/background`), env.THEME_ASSETS.get(`${row.id}/sprite`)]);
-  if (!background || !sprite) fail(404, 'not_found', '主题素材暂不可用，请稍后再试。');
+  const [background, sprite] = await Promise.all([readAsset(env, row, 'background'), readAsset(env, row, 'sprite')]);
   const readme = `${row.title}\n作者：${row.author}\n\n${row.description}\n\n素材来源与授权说明：\n${row.provenance}\n\n使用范围：个人非商业使用。再分发、修改发布和商用须另行取得作者及相关权利人的授权。\n\n这是 WhereFile 创意工坊主题素材包，包含静态背景、透明物件和运动设置。\n当前 Windows 版尚不支持导入主题包；请在官网预览，或保存素材供个人使用。\n文件不包含可执行程序。\n`;
   const zip = await makeZip([
     { name: 'theme.json', bytes: encoder.encode(JSON.stringify(config, null, 2) + '\n') },
-    { name: config.background, bytes: new Uint8Array(await background.arrayBuffer()) },
-    { name: 'object.png', bytes: new Uint8Array(await sprite.arrayBuffer()) },
+    { name: config.background, bytes: background },
+    { name: 'object.png', bytes: sprite },
     { name: 'README.txt', bytes: encoder.encode(readme) },
   ]);
   return new Response(request.method === 'HEAD' ? null : zip, { headers: {
@@ -166,10 +172,14 @@ async function submit(request, env) {
   const id = crypto.randomUUID();
   const receiptToken = hex(crypto.getRandomValues(new Uint8Array(32)));
   const createdAt = new Date().toISOString();
+  const storedBytes = data.background.bytes.byteLength + data.sprite.bytes.byteLength;
+  const reservation = await env.DB.prepare('UPDATE storage_quota SET bytes = bytes + ? WHERE id = 1 AND bytes + ? <= ? RETURNING bytes')
+    .bind(storedBytes, storedBytes, MAX_STORED_BYTES).first();
+  if (!reservation) fail(503, 'storage_full', '工坊存储空间已满，暂时无法接收新主题。');
   try {
     const uploads = await Promise.allSettled([
-      env.THEME_ASSETS.put(`${id}/background`, data.background.bytes, { httpMetadata: { contentType: data.background.contentType } }),
-      env.THEME_ASSETS.put(`${id}/sprite`, data.sprite.bytes, { httpMetadata: { contentType: 'image/png' } }),
+      env.THEME_ASSETS.put(`${id}/background`, data.background.bytes),
+      env.THEME_ASSETS.put(`${id}/sprite`, data.sprite.bytes),
     ]);
     const failed = uploads.find(result => result.status === 'rejected');
     if (failed) throw failed.reason;
@@ -179,7 +189,10 @@ async function submit(request, env) {
       data.license, JSON.stringify(data.config), data.background.contentType, data.background.bytes.byteLength,
       data.sprite.bytes.byteLength, hex(await digest(receiptToken)), createdAt).run();
   } catch (error) {
-    await env.THEME_ASSETS.delete([`${id}/background`, `${id}/sprite`]).catch(() => {});
+    const cleanup = await Promise.allSettled([env.THEME_ASSETS.delete(`${id}/background`), env.THEME_ASSETS.delete(`${id}/sprite`)]);
+    if (cleanup.every(result => result.status === 'fulfilled')) {
+      await env.DB.prepare('UPDATE storage_quota SET bytes = bytes - ? WHERE id = 1').bind(storedBytes).run();
+    }
     throw error;
   }
   return json({ submission: { id, status: 'pending', title: data.title, createdAt }, receiptToken }, 201);
@@ -225,6 +238,7 @@ export async function handleWorkshop(request, env) {
           const data = await jsonBody(request);
           if (!['approved', 'rejected'].includes(data.status)) fail(400, 'invalid_status', '请选择通过或退回。');
           const reason = data.status === 'rejected' ? text(data.reason, '退回原因', 1, 600) : '';
+          if (data.status === 'approved') await Promise.all([readAsset(env, row, 'background'), readAsset(env, row, 'sprite')]);
           const now = new Date().toISOString();
           await env.DB.prepare('UPDATE submissions SET status = ?, rejection_reason = ?, reviewed_at = ?, published_at = ? WHERE id = ?')
             .bind(data.status, reason, now, data.status === 'approved' ? (row.published_at || now) : null, row.id).run();
@@ -261,7 +275,7 @@ export async function handleWorkshop(request, env) {
     }
     fail(404, 'not_found', '没有找到此页面。');
   } catch (error) {
-    if (error instanceof ApiError) return json({ error: { code: error.code, message: error.message } }, error.status);
+    if (error instanceof ApiError) return json({ error: { code: error.code, message: error.message } }, error.status, error.headers);
     if ([400, 413, 415].includes(error?.status)) return json({ error: { code: error.status === 413 ? 'payload_too_large' : 'invalid_submission', message: error.message } }, error.status);
     console.error('Workshop request failed:', error?.name || 'Error');
     return json({ error: { code: 'internal_error', message: '暂时无法完成，请稍后重试。' } }, 500);

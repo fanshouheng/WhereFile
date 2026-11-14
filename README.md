@@ -68,7 +68,7 @@ Cloudflare Pages 项目为 `wherefile`，配置在 `wrangler.jsonc`。更新时�
 
 官网上传背景和透明物件、设置运动并即时预览，人工审核后公开预览及下载主题包。支持投稿回执、管理员审核/撤下和问题反馈。当前 Windows 版暂不支持导入工坊主题包。
 
-代码与本地完整流程已验证，等待 Cloudflare 账号启用 R2 后部署。运行、审核及准确发布状态见 [创意工坊](docs/workshop.md)。`npm run workshop:dev` 使用 4178，提供真实本地 D1/R2 存储；4177 仍是纯静态官网预览。
+使用 Cloudflare KV 与 D1 免费额度，无需启用 R2。运行、审核及准确发布状态见 [创意工坊](docs/workshop.md)。`npm run workshop:dev` 使用 4178，提供真实本地 D1/KV 存储；4177 仍是纯静态官网预览。
 
 ## 主界面设计预览
 

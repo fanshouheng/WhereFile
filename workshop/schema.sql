@@ -32,3 +32,10 @@ CREATE TABLE IF NOT EXISTS reports (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS reports_theme_date ON reports(theme_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS storage_quota (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  bytes INTEGER NOT NULL CHECK (bytes >= 0)
+);
+INSERT OR IGNORE INTO storage_quota (id, bytes)
+  SELECT 1, COALESCE(SUM(background_size + sprite_size), 0) FROM submissions;

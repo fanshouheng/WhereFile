@@ -24,7 +24,7 @@
 - 真实桌面联动只改变图标显示，不移动、重命名、删除或改写原文件；保持退出及异常恢复链路。
 - `HaiyuWallpaper` 数据目录、单实例事件、`haiyu.local`、`tidal-desktop` 与 `island-*` 存储键用于兼容旧数据，不作批量品牌替换。
 - `.local/` 含本机凭据与历史备份；`output/` 是构建、原始素材及验证现场。保持 Git 忽略，不将凭据、用户数据或参考提取素材放入仓库/发布包。
-- 工坊后台在 `workshop/` 与 `functions/`，使用私有 R2 和 D1；`.dev.vars`、`.local/workshop-admin.json` 是本机凭据。用户主题只允许数据配置与静态位图，待审核素材不得公开；Windows 客户端尚不支持工坊主题导入。
+- 工坊后台在 `workshop/` 与 `functions/`，使用私有 KV 和 D1 免费额度；`.dev.vars`、`.local/workshop-admin.json` 是本机凭据。用户主题只允许数据配置与静态位图，待审核素材不得公开；Windows 客户端尚不支持工坊主题导入。
 - 生图是可选外部 API 操作，不为文档审计调用。删除旧素材、测试现场或分支前，先汇报候选并等待确认。
 
 ## 当前状态与下一步

@@ -1,15 +1,10 @@
+import { crc32 as nativeCrc32 } from 'node:zlib';
+
 const encoder = new TextEncoder();
 const names = /^(?:theme\.json|README\.txt|LICENSE\.txt|background\.(?:png|jpg|webp)|object\.png)$/;
-const crcTable = Uint32Array.from({ length: 256 }, (_, index) => {
-  let value = index;
-  for (let bit = 0; bit < 8; bit++) value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
-  return value >>> 0;
-});
 
 export function crc32(bytes) {
-  let value = 0xffffffff;
-  for (const byte of bytes) value = crcTable[(value ^ byte) & 255] ^ (value >>> 8);
-  return (value ^ 0xffffffff) >>> 0;
+  return nativeCrc32(bytes);
 }
 
 export function makeZip(entries) {

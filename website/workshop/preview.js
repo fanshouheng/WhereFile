@@ -7,6 +7,18 @@ export function createPreview(container, options = {}) {
   region.className = 'preview-region';
   region.hidden = true;
   container.replaceChildren(background, region);
+  const loadStatus = document.createElement('p');
+  loadStatus.className = 'form-status';
+  loadStatus.setAttribute('role', 'status');
+  loadStatus.hidden = true;
+  loadStatus.append('图片暂未加载完成，请稍后重试。 ');
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.className = 'text-button';
+  retry.textContent = '重新加载';
+  loadStatus.append(retry);
+  container.after(loadStatus);
+  const failedImages = new Set();
   const objects = [];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let paused = reducedMotion.matches;
@@ -22,6 +34,33 @@ export function createPreview(container, options = {}) {
     const url = new URL(value, location.href);
     return url.origin === location.origin || (url.protocol === 'blob:' && url.pathname.startsWith(location.origin)) ? url.href : '';
   }
+  function onImageLoad(event) {
+    if (destroyed) return;
+    failedImages.delete(event.currentTarget);
+    loadStatus.hidden = failedImages.size === 0;
+    if (event.currentTarget === background && background.naturalWidth && background.naturalHeight) container.style.aspectRatio = `${background.naturalWidth}/${background.naturalHeight}`;
+    render();
+  }
+  function onImageError(event) {
+    if (destroyed) return;
+    failedImages.add(event.currentTarget);
+    loadStatus.hidden = false;
+  }
+  function listenImage(image, remove = false) {
+    const method = remove ? 'removeEventListener' : 'addEventListener';
+    image[method]('load', onImageLoad);
+    image[method]('error', onImageError);
+    if (remove) failedImages.delete(image);
+  }
+  function retryImages() {
+    for (const image of failedImages) {
+      const url = new URL(assetURL(image === background ? urls.background : urls.sprite));
+      if (url.protocol !== 'blob:') url.searchParams.set('_retry', String(Date.now()));
+      image.src = url.href;
+    }
+  }
+  listenImage(background);
+  retry.addEventListener('click', retryImages);
   function render() {
     const width = container.clientWidth;
     const height = container.clientHeight;
@@ -67,12 +106,13 @@ export function createPreview(container, options = {}) {
     region.hidden = !next.showRegion;
     if (next.background !== undefined && next.background !== urls.background) {
       urls.background = next.background;
+      failedImages.delete(background);
       background.src = assetURL(next.background);
       background.hidden = !next.background;
     }
     if (next.sprite !== undefined && next.sprite !== urls.sprite) {
       urls.sprite = next.sprite;
-      objects.forEach(({element}) => element.remove());
+      objects.forEach(({element, image}) => { listenImage(image, true); element.remove(); });
       objects.length = 0;
       if (next.sprite) ['灵感.txt', '周末计划', '我的文件夹'].forEach(label => {
         const element = document.createElement('div');
@@ -81,14 +121,15 @@ export function createPreview(container, options = {}) {
         name.className = 'preview-filename';
         name.textContent = label;
         const image = document.createElement('img');
+        listenImage(image);
         image.src = assetURL(next.sprite);
         image.alt = '';
-        image.addEventListener('load', render);
         element.append(name, image);
         container.append(element);
         objects.push({element, image});
       });
     }
+    loadStatus.hidden = failedImages.size === 0;
     render();
     schedule();
   }
@@ -101,10 +142,6 @@ export function createPreview(container, options = {}) {
   }
   function onVisibility() { previous = 0; schedule(); }
   function onMotion() { setPaused(reducedMotion.matches); options.onPauseChange?.(paused); }
-  background.addEventListener('load', () => {
-    if (background.naturalWidth && background.naturalHeight) container.style.aspectRatio = `${background.naturalWidth}/${background.naturalHeight}`;
-    render();
-  });
   const observer = new ResizeObserver(render);
   observer.observe(container);
   document.addEventListener('visibilitychange', onVisibility);
@@ -114,6 +151,10 @@ export function createPreview(container, options = {}) {
     destroyed = true;
     cancelAnimationFrame(frame);
     observer.disconnect();
+    listenImage(background, true);
+    objects.forEach(({image}) => listenImage(image, true));
+    retry.removeEventListener('click', retryImages);
+    loadStatus.remove();
     document.removeEventListener('visibilitychange', onVisibility);
     reducedMotion.removeEventListener('change', onMotion);
   }};

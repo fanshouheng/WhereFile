@@ -95,6 +95,24 @@ await invalid(input => input.set('sprite', new File([Buffer.alloc(2 * 1048576 + 
 console.log('PASS: valid real WebP/transparent PNG, normalized data-only settings; malformed, active, oversized and unlicensed submissions rejected.');
 
 assert.equal(crc32(new TextEncoder().encode('123456789')), 0xcbf43926);
+let randomState = 0x12345678;
+const randomBytes = Uint8Array.from({ length: 65573 }, () => {
+  randomState ^= randomState << 13; randomState ^= randomState >>> 17; randomState ^= randomState << 5;
+  return randomState & 255;
+});
+const crcCases = [];
+for (const length of [0, 1, 7, 8, 15, 16, 17, 31, 32, 33, 255, 1024, 65536]) {
+  for (const offset of [0, 1, 13, 37]) {
+    const bytes = randomBytes.subarray(offset, offset + length);
+    crcCases.push({ offset, length, bytes });
+  }
+}
+const crcReference = spawnSync('python', ['-X', 'utf8', '-c',
+  'import base64,json,sys,zlib; print(json.dumps([zlib.crc32(base64.b64decode(s)) for s in json.load(sys.stdin)]))'],
+{ input: JSON.stringify(crcCases.map(({ bytes }) => Buffer.from(bytes).toString('base64'))), encoding: 'utf8' });
+assert.equal(crcReference.status, 0, crcReference.stderr || crcReference.error?.message);
+const expectedCrcs = JSON.parse(crcReference.stdout);
+crcCases.forEach(({ offset, length, bytes }, index) => assert.equal(crc32(bytes), expectedCrcs[index], `CRC mismatch at offset ${offset}, length ${length}`));
 const archive = makeZip([
   { name: 'theme.json', bytes: new TextEncoder().encode(JSON.stringify(valid.config)) },
   { name: 'background.png', bytes: valid.background.bytes },
