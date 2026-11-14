@@ -24,7 +24,7 @@ export function createSiteServer() {
       const info = await stat(file);
       if (!info.isFile()) throw new Error('Not a file');
       const headers = { 'Content-Type': types[path.extname(file)], 'Content-Length': info.size,
-        'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' };
+        'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'X-WhereFile-Static-Preview': '1' };
       if (path.extname(file) === '.exe') headers['Content-Disposition'] = `attachment; filename="${path.basename(file)}"`;
       res.writeHead(200, headers);
       if (req.method === 'HEAD') res.end();

@@ -90,6 +90,50 @@ function pageOffset(url) {
   if (!/^\d{1,6}$/.test(value) || Number(value) > 100000) fail(400, 'invalid_offset', '翻页位置无效，请从第一页重新打开。');
   return Number(value);
 }
+function downloadDay(timestamp = Date.now()) { return new Date(timestamp + 8 * 60 * 60 * 1000).toISOString().slice(0, 10); }
+async function countDownload(request, env, kind, id) {
+  if (request.method !== 'GET' || /prefetch|prerender/i.test([request.headers.get('Purpose'), request.headers.get('Sec-Purpose'), request.headers.get('X-Purpose')].join(' '))) return;
+  try {
+    await env.DB.prepare(`INSERT INTO download_counts (kind, item_id, day, count) VALUES (?, ?, ?, 1)
+      ON CONFLICT(kind, item_id, day) DO UPDATE SET count = count + 1`).bind(kind, id, downloadDay()).run();
+  } catch { console.error('Download statistics write failed'); }
+}
+async function installer(request, env) {
+  let release, target;
+  try {
+    const response = await env.ASSETS.fetch(new Request(new URL('/download.json', request.url)));
+    if (!response.ok) throw new Error('Release metadata unavailable');
+    release = await response.json();
+    if (typeof release.version !== 'string' || !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(release.version) || typeof release.url !== 'string') throw new Error('Invalid release');
+    target = new URL(release.url, new URL('/', request.url));
+    const sameOrigin = target.origin === new URL(request.url).origin;
+    if (target.username || target.password || target.hash || (sameOrigin
+      ? target.pathname !== `/downloads/WhereFile-v${release.version}-Setup-x64.exe` || target.search
+      : target.protocol !== 'https:')) throw new Error('Invalid release URL');
+  } catch { fail(503, 'download_unavailable', '安装包暂时无法下载，请稍后重试。'); }
+  await countDownload(request, env, 'installer', release.version);
+  return new Response(null, { status: 302, headers: { ...privateHeaders, Location: target.href } });
+}
+async function downloadStats(env) {
+  if (!env.DB) fail(503, 'unavailable', '下载统计暂时无法读取，请稍后重试。');
+  const now = Date.now();
+  const today = downloadDay(now);
+  const dates = Array.from({ length: 7 }, (_, index) => downloadDay(now - (6 - index) * 86400000));
+  const { results } = await env.DB.prepare(`SELECT d.kind, d.item_id, s.title, SUM(d.count) AS total,
+    SUM(CASE WHEN d.day = ? THEN d.count ELSE 0 END) AS today,
+    SUM(CASE WHEN d.day >= ? THEN d.count ELSE 0 END) AS last7Days
+    FROM download_counts d LEFT JOIN submissions s ON d.kind = 'theme' AND s.id = d.item_id
+    WHERE d.day <= ? GROUP BY d.kind, d.item_id ORDER BY total DESC, d.kind, d.item_id`).bind(today, dates[0], today).all();
+  const summary = { installer: { total: 0, today: 0, last7Days: 0 }, theme: { total: 0, today: 0, last7Days: 0 } };
+  for (const row of results) for (const field of ['total', 'today', 'last7Days']) summary[row.kind][field] += row[field];
+  const daily = dates.map(date => ({ date, installer: 0, theme: 0 }));
+  const days = await env.DB.prepare('SELECT day, kind, SUM(count) AS count FROM download_counts WHERE day >= ? AND day <= ? GROUP BY day, kind').bind(dates[0], today).all();
+  for (const row of days.results) daily.find(day => day.date === row.day)[row.kind] = row.count;
+  return json({ today, timeZone: 'Asia/Shanghai', summary, daily, downloads: results.slice(0, 100).map(row => ({
+    kind: row.kind, id: row.item_id, title: row.kind === 'installer' ? `WhereFile v${row.item_id}` : (row.title || row.item_id),
+    total: row.total, today: row.today, last7Days: row.last7Days,
+  })) });
+}
 async function rateLimit(request, env, action) {
   if (typeof env.WORKSHOP_RATE_SALT !== 'string' || env.WORKSHOP_RATE_SALT.length < 16) fail(503, 'upload_unavailable', '提交服务尚未配置，请稍后再试。');
   const day = new Date().toISOString().slice(0, 10);
@@ -154,6 +198,7 @@ async function download(request, env, row) {
     { name: 'object.png', bytes: sprite },
     { name: 'README.txt', bytes: encoder.encode(readme) },
   ]);
+  await countDownload(request, env, 'theme', row.id);
   return new Response(request.method === 'HEAD' ? null : zip, { headers: {
     ...privateHeaders, 'Content-Type': 'application/zip', 'Content-Length': String(zip.byteLength),
     'Content-Disposition': `attachment; filename="WhereFile-theme-${row.id}.zip"`,
@@ -206,6 +251,7 @@ export async function handleWorkshop(request, env) {
     if (!['GET', 'HEAD', 'POST'].includes(request.method)) return json({ error: { code: 'method_not_allowed', message: '不支持此操作。' } }, 405, { Allow: 'GET, HEAD, POST' });
     if (request.method === 'POST') writeOrigin(request);
 
+    if (route === '/downloads/installer' && ['GET', 'HEAD'].includes(request.method)) return await installer(request, env);
     if (route === '/submissions' && request.method === 'POST') { storage(env); return await submit(request, env); }
     let match = new RegExp(`^/submissions/(${UUID})$`).exec(route);
     if (match && request.method === 'GET') {
@@ -217,6 +263,7 @@ export async function handleWorkshop(request, env) {
     }
     if (route === '/moderation' || route.startsWith('/moderation/')) {
       await admin(request, env);
+      if (route === '/moderation/stats' && request.method === 'GET') return await downloadStats(env);
       storage(env);
       if (route === '/moderation' && request.method === 'GET') {
         const status = url.searchParams.get('status') || 'pending';

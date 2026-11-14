@@ -64,9 +64,19 @@ npm run workshop:admin -- reports
 
 `inspect` 将待审核素材保存在忽略的 `output/workshop-review/<ID>/`，不打开外部浏览器。公开测试请使用明确的测试作品，验收后撤下；不要将同人或私人素材自动发布为原创。
 
+## 下载统计
+
+管理员在 `/workshop/?review` 登录后查看安装包和主题包的累计、今日、近 7 天请求次数，可手动刷新，并展开累计最多的 100 个版本或主题。CLI：`npm run workshop:admin -- stats`。私有接口 `GET /api/workshop/moderation/stats` 复用管理员鉴权，返回汇总、近 7 天每日数据与明细，禁止缓存；不向访客公开。
+
+统计从功能上线后开始，历史下载无法补算。数据在 D1 `download_counts` 按北京时间的日期、类型与版本/主题 ID 原子累计；重复请求会累计，不记录 IP、Cookie 或设备标识，也不代表唯一用户、传输完成或安装成功。HEAD、显式预取/预渲染、未通过或已撤下主题以及打包失败不计数；统计写入失败时保留下载响应，可能少计。
+
+官网安装按钮请求 `GET /api/workshop/downloads/installer`，从当前部署的 `/download.json` 读取地址、计数并返回禁止缓存的 302，再由 Pages 静态文件服务发送 EXE。每次计数增加一次 Functions 请求和一次 D1 upsert，占用账号共用免费额度；安装包字节仍走静态服务，不读取 KV。直接访问或分享 `/downloads/*.exe` 会绕过统计。本地 `npm run site` 纯静态服务通过响应头标识预览环境，继续直接下载、不记统计；`workshop:dev` 提供完整统计路径。
+
+主题下载在现有 ZIP 接口打包成功后计数，仍需两次 KV 读取。免费额度内不能承诺无限次带统计下载；D1/Functions 限额和持续大图 CPU 边界同样适用。数据库计数故障不阻断下载，但平台本身拒绝动态入口时，不能保证该入口仍然可用。
+
 ## Cloudflare 部署
 
-`wrangler.jsonc` 绑定 D1 `DB` 和 KV `THEME_ASSETS`。API 入口为 `functions/api/workshop/[[path]].js`，静态构建只复制网站与允许的预览资产；`_routes.json` 仅将 `/api/workshop/*` 送入 Functions，安装包保持静态下载。
+`wrangler.jsonc` 绑定 D1 `DB` 和 KV `THEME_ASSETS`。API 入口为 `functions/api/workshop/[[path]].js`，静态构建只复制网站与允许的预览资产；`_routes.json` 仅将 `/api/workshop/*` 送入 Functions。安装包的统计入口经过 Functions 后跳转，文件本体保持静态下载。更新统计功能前先执行下方幂等 schema 命令，只新增计数表，保留既有投稿与历史统计。
 
 首次配置使用 `npx wrangler@4.161.0 kv namespace create wherefile-workshop`，将返回 ID 写入配置；现有 namespace 已创建，更新时复用，不重复创建。
 

@@ -66,7 +66,7 @@ Cloudflare Pages 项目为 `wherefile`，配置在 `wrangler.jsonc`。更新时�
 
 ## 创意工坊
 
-官网上传背景和透明物件、设置运动并即时预览，人工审核后公开预览及下载主题包。支持投稿回执、管理员审核/撤下和问题反馈。当前 Windows 版暂不支持导入工坊主题包。
+官网上传背景和透明物件、设置运动并即时预览，人工审核后公开预览及下载主题包。支持投稿回执、管理员审核/撤下、问题反馈，以及安装包和主题包下载请求统计。管理员在 `/workshop/?review` 查看累计、今日和近 7 天数据。当前 Windows 版暂不支持导入工坊主题包。
 
 已上线 [创意工坊](https://wherefile.soul.中国/workshop/)，使用 Cloudflare KV 与 D1 免费额度，无需启用 R2。运行、审核及免费运行边界见 [工坊说明](docs/workshop.md)。`npm run workshop:dev` 使用 4178，提供真实本地 D1/KV 存储；4177 仍是纯静态官网预览。
 

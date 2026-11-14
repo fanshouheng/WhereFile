@@ -65,7 +65,18 @@
   <template id="review-template">
     <div class="page-heading"><a class="back-link" href="/workshop/">返回工坊</a><h1>主题审核</h1></div>
     <form id="review-login" class="review-login"><div class="field"><label for="review-token">管理员密钥</label><input id="review-token" type="password" autocomplete="off" required></div><button class="button" type="submit">打开审核列表</button><p class="form-note">密钥仅在当前页面使用，不会保存在浏览器。</p></form>
-    <section id="review-workspace" hidden><div class="review-toolbar"><label for="review-filter">查看状态</label><select id="review-filter"><option value="pending">待审核</option><option value="approved">已发布</option><option value="rejected">未通过</option></select><button id="review-refresh" class="text-button" type="button">刷新列表</button><button id="review-logout" class="text-button" type="button">退出</button></div><div class="review-layout"><div id="review-list"></div><article id="review-detail" class="review-detail"></article></div></section><p class="form-status" id="review-status" role="status"></p>
+    <section id="review-workspace" hidden>
+      <section class="download-stats" aria-labelledby="stats-heading">
+        <div class="preview-heading"><h2 id="stats-heading">下载统计</h2><button id="stats-refresh" class="text-button" type="button">刷新统计</button></div>
+        <p class="form-note">下载请求次数，重复下载会累计；不代表下载完成或安装成功。日期按北京时间。</p>
+        <p id="stats-status" class="form-status" role="status"></p>
+        <div id="stats-content" hidden>
+          <div class="stats-table-wrap"><table class="stats-table"><caption class="sr-only">下载请求汇总</caption><thead><tr><th scope="col">下载内容</th><th scope="col">累计</th><th scope="col">今日</th><th scope="col">近 7 天</th></tr></thead><tbody id="stats-summary"></tbody></table></div>
+          <details class="stats-breakdown"><summary>按版本和主题查看（累计前 100 项）</summary><div class="stats-table-wrap"><table class="stats-table"><caption class="sr-only">各版本和主题下载请求</caption><thead><tr><th scope="col">版本 / 主题</th><th scope="col">累计</th><th scope="col">今日</th><th scope="col">近 7 天</th></tr></thead><tbody id="stats-downloads"></tbody></table></div></details>
+        </div>
+      </section>
+      <div class="review-toolbar"><label for="review-filter">查看状态</label><select id="review-filter"><option value="pending">待审核</option><option value="approved">已发布</option><option value="rejected">未通过</option></select><button id="review-refresh" class="text-button" type="button">刷新列表</button><button id="review-logout" class="text-button" type="button">退出</button></div><div class="review-layout"><div id="review-list"></div><article id="review-detail" class="review-detail"></article></div>
+    </section><p class="form-status" id="review-status" role="status"></p>
   </template>
 </body>
 </html>

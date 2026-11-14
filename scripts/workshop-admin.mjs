@@ -8,8 +8,8 @@ const [command, id, ...words] = args;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 async function main() {
-  if (!['list', 'inspect', 'approve', 'reject', 'reports'].includes(command)) {
-    console.log('用法：npm run workshop:admin -- list [pending|approved|rejected]\n      npm run workshop:admin -- inspect <主题ID>\n      npm run workshop:admin -- approve <主题ID>\n      npm run workshop:admin -- reject <主题ID> <原因>\n      npm run workshop:admin -- reports\n默认连接官网；WHEREFILE_WORKSHOP_URL 可指定本地测试地址。');
+  if (!['list', 'inspect', 'approve', 'reject', 'reports', 'stats'].includes(command)) {
+    console.log('用法：npm run workshop:admin -- list [pending|approved|rejected]\n      npm run workshop:admin -- inspect <主题ID>\n      npm run workshop:admin -- approve <主题ID>\n      npm run workshop:admin -- reject <主题ID> <原因>\n      npm run workshop:admin -- reports\n      npm run workshop:admin -- stats\n默认连接官网；WHEREFILE_WORKSHOP_URL 可指定本地测试地址。');
     return;
   }
   const credentials = JSON.parse(await readFile(path.join(root, '.local/workshop-admin.json'), 'utf8'));
@@ -32,8 +32,8 @@ async function main() {
     if (!['pending', 'approved', 'rejected'].includes(status)) throw new Error('请选择 pending、approved 或 rejected。');
     const { submissions } = await (await request(`/moderation?status=${status}`)).json();
     console.log(JSON.stringify(submissions.map(({ id, title, author, status, createdAt }) => ({ id, title, author, status, createdAt })), null, 2));
-  } else if (command === 'reports') {
-    console.log(JSON.stringify(await (await request('/moderation/reports')).json(), null, 2));
+  } else if (command === 'reports' || command === 'stats') {
+    console.log(JSON.stringify(await (await request(`/moderation/${command}`)).json(), null, 2));
   } else {
     if (!uuid.test(id || '')) throw new Error('请提供有效的主题 ID。');
     if (command === 'inspect') {

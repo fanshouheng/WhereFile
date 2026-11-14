@@ -39,3 +39,11 @@ CREATE TABLE IF NOT EXISTS storage_quota (
 );
 INSERT OR IGNORE INTO storage_quota (id, bytes)
   SELECT 1, COALESCE(SUM(background_size + sprite_size), 0) FROM submissions;
+
+CREATE TABLE IF NOT EXISTS download_counts (
+  kind TEXT NOT NULL CHECK (kind IN ('installer', 'theme')),
+  item_id TEXT NOT NULL,
+  day TEXT NOT NULL,
+  count INTEGER NOT NULL CHECK (count >= 0),
+  PRIMARY KEY (kind, item_id, day)
+);

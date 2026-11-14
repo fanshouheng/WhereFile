@@ -84,9 +84,11 @@ async function prepareDownload() {
     const release = await response.json();
     const url = new URL(release.url, location.href);
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Invalid download URL');
+    const staticPreview = response.headers.get('X-WhereFile-Static-Preview') === '1';
     links.forEach(link => {
-      link.href = url.href;
-      link.setAttribute('download', '');
+      link.href = staticPreview ? url.href : '/api/workshop/downloads/installer';
+      if (staticPreview) link.setAttribute('download', '');
+      else link.removeAttribute('download');
     });
     const size = release.size ? `，${(release.size / 1048576).toFixed(1)} MB` : '';
     document.querySelector('#download-meta').textContent = `v${release.version}${size} · Windows 10 / 11，64 位`;

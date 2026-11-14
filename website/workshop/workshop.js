@@ -27,7 +27,11 @@ async function request(path, options = {}) {
   catch { throw new Error('暂时无法连接创意工坊，请稍后重试。'); }
   let result;
   try { result = await response.json(); } catch { /* A platform error may not contain JSON. */ }
-  if (!response.ok) throw new Error(result?.error?.message || (response.status === 413 ? '图片太大，请缩小图片后重试。' : '暂时无法完成请求，请稍后重试。'));
+  if (!response.ok) {
+    const error = new Error(result?.error?.message || (response.status === 413 ? '图片太大，请缩小图片后重试。' : '暂时无法完成请求，请稍后重试。'));
+    error.status = response.status;
+    throw error;
+  }
   if (!result) throw new Error('暂时无法读取工坊数据，请稍后重试。');
   return result;
 }
@@ -322,12 +326,18 @@ function review() {
   const reviewStatus = document.querySelector('#review-status');
   const list = document.querySelector('#review-list');
   const panel = document.querySelector('#review-detail');
+  const statsStatus = document.querySelector('#stats-status');
+  const statsContent = document.querySelector('#stats-content');
+  const statsSummary = document.querySelector('#stats-summary');
+  const statsDownloads = document.querySelector('#stats-downloads');
+  const statsRefresh = document.querySelector('#stats-refresh');
   let token = '';
   let preview;
   let imageURLs = [];
   let selected = null;
   let detailVersion = 0;
   let listVersion = 0;
+  let statsVersion = 0;
   let nextOffset = 0;
   const more = element('button', 'secondary-button pagination-button', '加载更多');
   more.type = 'button';
@@ -343,11 +353,59 @@ function review() {
     imageURLs = [];
   }
   cleanup.push(clearPreview);
+  function logout() {
+    token = '';
+    selected = null;
+    detailVersion++;
+    listVersion++;
+    statsVersion++;
+    clearPreview();
+    list.replaceChildren();
+    panel.replaceChildren();
+    statsSummary.replaceChildren();
+    statsDownloads.replaceChildren();
+    statsContent.hidden = true;
+    status(statsStatus);
+    statsRefresh.disabled = false;
+    more.hidden = true;
+    workspace.hidden = true;
+    login.hidden = false;
+    status(reviewStatus);
+  }
+  async function reviewRequest(path, options = {}) {
+    try { return await request(path, {...options, headers: {...headers(), ...options.headers}}); }
+    catch (error) { if (error.status === 401) { logout(); status(reviewStatus, error.message, true); } throw error; }
+  }
+  async function loadStats() {
+    const version = ++statsVersion;
+    statsRefresh.disabled = true;
+    statsContent.hidden = true;
+    status(statsStatus, '正在读取下载统计…');
+    try {
+      const data = await reviewRequest('/moderation/stats');
+      if (version !== statsVersion) return;
+      const row = (title, counts) => {
+        const tr = element('tr');
+        const label = element('th', '', title);
+        label.scope = 'row';
+        tr.append(label);
+        for (const key of ['total', 'today', 'last7Days']) tr.append(element('td', '', Number(counts[key] || 0).toLocaleString('zh-CN')));
+        return tr;
+      };
+      statsSummary.replaceChildren(row('Windows 安装包', data.summary.installer), row('主题包', data.summary.theme));
+      statsDownloads.replaceChildren(...data.downloads.map(item => row(item.title, item)));
+      statsContent.hidden = false;
+      document.querySelector('.stats-breakdown').hidden = !data.downloads.length;
+      status(statsStatus, data.summary.installer.total + data.summary.theme.total === 0 ? '还没有下载记录，数据从功能上线后开始累计。' : '');
+    } catch (error) { if (version === statsVersion) status(statsStatus, error.message, true); }
+    finally { if (version === statsVersion) statsRefresh.disabled = false; }
+  }
+  statsRefresh.addEventListener('click', loadStats);
   async function loadList(append = false) {
     const version = ++listVersion;
     more.disabled = true;
     try {
-    const {submissions, hasMore, nextOffset: next} = await request(`/moderation?status=${encodeURIComponent(document.querySelector('#review-filter').value)}&offset=${append ? nextOffset : 0}`, {headers: headers()});
+    const {submissions, hasMore, nextOffset: next} = await reviewRequest(`/moderation?status=${encodeURIComponent(document.querySelector('#review-filter').value)}&offset=${append ? nextOffset : 0}`);
     if (version !== listVersion) return;
     if (!append) list.replaceChildren();
     if (!submissions.length && !append) list.append(element('p', 'review-empty', '这个状态下还没有主题。'));
@@ -378,11 +436,13 @@ function review() {
     selected = id;
     list.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.id === id)));
     panel.replaceChildren(element('p', 'muted', '正在读取主题…'));
-    const {submission} = await request(`/moderation/${id}`, {headers: headers()});
+    const {submission} = await reviewRequest(`/moderation/${id}`);
+    if (version !== detailVersion) return;
     const newURLs = [];
     try {
       for (const kind of ['background', 'sprite']) {
         const response = await fetch(safeURL(submission.assets[kind]), {headers: headers(), credentials: 'same-origin'});
+        if (response.status === 401) logout();
         if (!response.ok) throw new Error('无法读取待审核图片。');
         newURLs.push(URL.createObjectURL(await response.blob()));
       }
@@ -425,7 +485,7 @@ function review() {
       if (nextStatus === 'rejected' && !reason.value.trim()) { status(reviewStatus, '请填写未通过或撤下的原因。', true); reason.focus(); return; }
       approve.disabled = reject.disabled = true;
       try {
-        await request(`/moderation/${id}`, {method: 'POST', headers: {...headers(), 'Content-Type': 'application/json'}, body: JSON.stringify({status: nextStatus, reason: reason.value.trim()})});
+        await reviewRequest(`/moderation/${id}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({status: nextStatus, reason: reason.value.trim()})});
         status(reviewStatus, nextStatus === 'approved' ? '主题已发布。' : '主题已撤下或标记为未通过。');
         await loadList();
       } catch (error) { status(reviewStatus, error.message, true); approve.disabled = submission.status === 'approved'; reject.disabled = false; }
@@ -443,23 +503,12 @@ function review() {
       workspace.hidden = false;
       document.querySelector('#review-token').value = '';
       status(reviewStatus);
+      loadStats();
     } catch (error) { token = ''; status(reviewStatus, error.message, true); }
     finally { login.querySelector('button').disabled = false; }
   });
   for (const [id, event] of [['review-filter', 'change'], ['review-refresh', 'click']]) document.querySelector(`#${id}`).addEventListener(event, () => loadList().catch(error => status(reviewStatus, error.message, true)));
-  document.querySelector('#review-logout').addEventListener('click', () => {
-    token = '';
-    selected = null;
-    detailVersion++;
-    listVersion++;
-    clearPreview();
-    list.replaceChildren();
-    panel.replaceChildren();
-    more.hidden = true;
-    workspace.hidden = true;
-    login.hidden = false;
-    status(reviewStatus);
-  });
+  document.querySelector('#review-logout').addEventListener('click', logout);
 }
 
 window.addEventListener('pagehide', event => { if (!event.persisted) cleanup.forEach(fn => fn()); });

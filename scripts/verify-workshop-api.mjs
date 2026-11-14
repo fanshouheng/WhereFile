@@ -29,11 +29,18 @@ const THEME_ASSETS = {
   },
   async delete(key) { assert.equal(typeof key, 'string', 'KV deletes accept one key'); objects.delete(key); },
 };
-const env = { DB, THEME_ASSETS, WORKSHOP_ADMIN_TOKEN: 'admin-test-'.repeat(5), WORKSHOP_RATE_SALT: 'rate-salt-test-'.repeat(3) };
+const release = { version: '0.1.3', url: 'downloads/WhereFile-v0.1.3-Setup-x64.exe' };
+const ASSETS = { async fetch(request) {
+  assert.equal(new URL(request.url).pathname, '/download.json');
+  return Response.json(release);
+} };
+const env = { DB, THEME_ASSETS, ASSETS, WORKSHOP_ADMIN_TOKEN: 'admin-test-'.repeat(5), WORKSHOP_RATE_SALT: 'rate-salt-test-'.repeat(3) };
 const base = 'https://wherefile.example/api/workshop';
 const adminHeaders = { Authorization: `Bearer ${env.WORKSHOP_ADMIN_TOKEN}` };
 const call = (route, options = {}, bindings = env) => handleWorkshop(new Request(base + route, options), bindings);
 const dataOf = async response => ({ status: response.status, data: await response.json() });
+const stats = async () => (await dataOf(await call('/moderation/stats', { headers: adminHeaders }))).data;
+const downloadCount = kind => database.prepare('SELECT COALESCE(SUM(count), 0) AS count FROM download_counts WHERE kind = ?').get(kind).count;
 const background = await readFile(new URL('../assets/coast-hd.webp', import.meta.url));
 const sprite = await readFile(new URL('../assets/boat-hd.png', import.meta.url));
 function submission() {
@@ -53,6 +60,8 @@ try {
   const before = queries;
   assert.equal((await call('/moderation')).status, 401);
   assert.equal((await call('/moderation/reports')).status, 401);
+  assert.equal((await call('/moderation/stats')).status, 401);
+  assert.equal((await call('/moderation/stats', { headers: { Authorization: 'Bearer ' + 'x'.repeat(40) } })).status, 401);
   assert.equal((await call('/moderation', { headers: { Authorization: 'Bearer ' + 'x'.repeat(40) } })).status, 401);
   assert.equal((await call('/submissions/00000000-0000-4000-8000-000000000000')).status, 401);
   assert.equal(queries, before, 'Unauthorized requests must not query submissions');
@@ -61,6 +70,39 @@ try {
   assert.equal((await call('/moderation', {}, { ...env, WORKSHOP_ADMIN_TOKEN: '' })).status, 503);
   assert.equal((await call('/submissions', { method: 'POST', body: submission() }, { ...env, WORKSHOP_RATE_SALT: '' })).status, 503);
   console.log('PASS: same-origin writes, missing configuration, and authentication before database access.');
+
+  const initialStats = await stats();
+  assert.deepEqual(initialStats.summary, { installer: { total: 0, today: 0, last7Days: 0 }, theme: { total: 0, today: 0, last7Days: 0 } });
+  assert.equal(initialStats.timeZone, 'Asia/Shanghai');
+  assert.equal(initialStats.daily.length, 7);
+  assert.ok(initialStats.daily.every(day => day.installer === 0 && day.theme === 0));
+  assert.deepEqual(initialStats.downloads, []);
+  const redirect = await call('/downloads/installer?url=https://untrusted.example/other.exe');
+  assert.equal(redirect.status, 302);
+  assert.equal(redirect.headers.get('Location'), 'https://wherefile.example/downloads/WhereFile-v0.1.3-Setup-x64.exe');
+  assert.equal(redirect.headers.get('Cache-Control'), 'no-store');
+  assert.equal(downloadCount('installer'), 1);
+  for (const options of [{ method: 'HEAD' }, { headers: { Purpose: 'prefetch' } }, { headers: { 'Sec-Purpose': 'prefetch;prerender' } }, { headers: { 'X-Purpose': 'preview prerender' } }]) {
+    assert.equal((await call('/downloads/installer', options)).status, 302);
+  }
+  assert.equal(downloadCount('installer'), 1, 'HEAD and explicit prefetch must not increment downloads');
+  const externalEnv = { ...env, ASSETS: { async fetch() { return Response.json({ version: '0.1.4', url: 'https://cdn.example/installer.exe' }); } } };
+  assert.equal((await call('/downloads/installer', { method: 'HEAD' }, externalEnv)).headers.get('Location'), 'https://cdn.example/installer.exe');
+  for (const metadata of [null, { version: 'bad', url: release.url }, { ...release, url: '/.local/private.exe' }, { ...release, url: 'http://cdn.example/setup.exe' }, { ...release, url: 'javascript:alert(1)' }, { ...release, url: 'https://user:password@cdn.example/setup.exe' }]) {
+    const response = await call('/downloads/installer', {}, { ...env, ASSETS: { async fetch() { return Response.json(metadata); } } });
+    assert.equal(response.status, 503);
+  }
+  assert.equal((await call('/downloads/installer', {}, { ...env, ASSETS: { async fetch() { return new Response('missing', { status: 404 }); } } })).status, 503);
+  assert.equal(downloadCount('installer'), 1, 'Invalid or unavailable installer metadata must not increment downloads');
+  assert.equal((await call('/downloads/installer', {}, { ...env, DB: undefined })).status, 302, 'Missing statistics storage must not block the static installer');
+  const failedCountsEnv = { ...env, DB: { prepare(sql) {
+    if (/^INSERT INTO download_counts/.test(sql)) return { bind() { return this; }, async run() { throw new Error('Simulated statistics failure'); } };
+    return DB.prepare(sql);
+  } } };
+  assert.equal((await call('/downloads/installer', {}, failedCountsEnv)).status, 302);
+  await Promise.all(Array.from({ length: 20 }, () => call('/downloads/installer')));
+  assert.equal(downloadCount('installer'), 21, 'Atomic increments must preserve concurrent requests');
+  console.log('PASS: private zero-baseline stats; trusted static installer redirects; HEAD/prefetch exclusion; atomic counts; unavailable statistics do not block downloads.');
 
   const uploaded = await dataOf(await call('/submissions', { method: 'POST', body: submission() }));
   assert.equal(uploaded.status, 201, JSON.stringify(uploaded.data));
@@ -117,9 +159,15 @@ try {
   const bytes = new Uint8Array(await archive.arrayBuffer());
   assert.equal(new DataView(bytes.buffer).getUint32(0, true), 0x04034b50);
   assert.ok(new TextDecoder().decode(bytes).includes('当前 Windows 版尚不支持导入主题包'));
+  assert.equal(downloadCount('theme'), 1);
+  assert.equal((await call(`/themes/${id}/download`, { method: 'HEAD' })).status, 200);
+  assert.equal((await call(`/themes/${id}/download`, { headers: { 'Sec-Purpose': 'prefetch' } })).status, 200);
+  assert.equal(downloadCount('theme'), 1, 'Theme HEAD and prefetch requests do not count');
+  assert.equal((await call(`/themes/${id}/download`, {}, failedCountsEnv)).status, 200, 'Statistics failures must not block theme ZIP downloads');
   const lateSync = await call(`/themes/${id}/download`, {}, { ...env, THEME_ASSETS: syncingAssets });
   assert.equal(lateSync.status, 503);
   assert.equal(lateSync.headers.get('Retry-After'), '60');
+  assert.equal(downloadCount('theme'), 1, 'Failed theme generation must not count');
   const failedRead = await call(`/themes/${id}/assets/sprite`, {}, { ...env, THEME_ASSETS: { ...THEME_ASSETS, async get() { throw new Error('KV read limit'); } } });
   assert.equal(failedRead.status, 503);
   assert.equal((await failedRead.json()).error.code, 'storage_unavailable');
@@ -143,6 +191,41 @@ try {
   const rejectedReceipt = (await dataOf(await call(`/submissions/${id}`, { headers: { Authorization: `Bearer ${receiptToken}` } }))).data.submission;
   assert.equal(rejectedReceipt.reason, '本地验证已结束。');
   assert.deepEqual((await dataOf(await call('/themes'))).data.themes, []);
+  assert.equal(downloadCount('theme'), 1, 'Pending and withdrawn themes must not count downloads');
+  const savedDate = globalThis.Date;
+  const frozenAt = savedDate.parse('2026-11-14T15:59:59.999Z');
+  let currentTime = frozenAt;
+  globalThis.Date = class extends savedDate {
+    constructor(...args) { super(...(args.length ? args : [currentTime])); }
+    static now() { return currentTime; }
+  };
+  try {
+    database.exec('DELETE FROM download_counts');
+    await call('/downloads/installer');
+    currentTime++;
+    await call('/downloads/installer');
+    database.prepare('INSERT INTO download_counts (kind, item_id, day, count) VALUES (?, ?, ?, ?)').run('installer', '0.1.2', '2026-11-08', 3);
+    database.prepare('INSERT INTO download_counts (kind, item_id, day, count) VALUES (?, ?, ?, ?)').run('theme', id, '2026-11-09', 4);
+    database.prepare('INSERT INTO download_counts (kind, item_id, day, count) VALUES (?, ?, ?, ?)').run('theme', id, '2026-11-15', 2);
+    const aggregate = await stats();
+    assert.equal(aggregate.today, '2026-11-15', 'A UTC 16:00 request belongs to the next Beijing day');
+    assert.deepEqual(aggregate.summary, { installer: { total: 5, today: 1, last7Days: 2 }, theme: { total: 6, today: 2, last7Days: 6 } });
+    assert.deepEqual(aggregate.daily, [
+      { date: '2026-11-09', installer: 0, theme: 4 }, { date: '2026-11-10', installer: 0, theme: 0 },
+      { date: '2026-11-11', installer: 0, theme: 0 }, { date: '2026-11-12', installer: 0, theme: 0 },
+      { date: '2026-11-13', installer: 0, theme: 0 }, { date: '2026-11-14', installer: 1, theme: 0 },
+      { date: '2026-11-15', installer: 1, theme: 2 },
+    ]);
+    assert.equal(aggregate.downloads[0].title, receipt.title, 'Withdrawn theme titles remain available to the private statistics dashboard');
+    for (const kind of ['installer', 'theme']) {
+      assert.equal(aggregate.downloads.filter(item => item.kind === kind).reduce((sum, item) => sum + item.total, 0), aggregate.summary[kind].total);
+      assert.equal(aggregate.daily.reduce((sum, day) => sum + day[kind], 0), aggregate.summary[kind].last7Days);
+    }
+    assert.equal((await call('/moderation/stats', { headers: adminHeaders })).headers.get('Cache-Control'), 'no-store');
+    database.exec(await readFile(new URL('../workshop/schema.sql', import.meta.url), 'utf8'));
+    assert.deepEqual((await stats()).summary, aggregate.summary, 'Reapplying schema must preserve download history');
+  } finally { globalThis.Date = savedDate; }
+  console.log('PASS: successful public GET-only theme counting; Beijing midnight boundaries, seven-day zero fill, per-file totals and schema-safe history.');
   console.log('PASS: reports persist, rejection needs a reason, and withdrawn themes lose all public access.');
 
   const large = await call('/submissions', { method: 'POST', headers: { 'Content-Type': 'multipart/form-data; boundary=test', 'Content-Length': String(12 * 1024 * 1024) }, body: 'small' });
