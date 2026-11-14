@@ -9,6 +9,9 @@
     "site": "node scripts/site-build.mjs && node scripts/site-server.mjs",
     "site:build": "node scripts/site-build.mjs",
     "site:verify": "node scripts/verify-site.cjs",
-    "check": "node --check app.js && node --check ocean.js && node --check voyage.js && node --check server.mjs && node --check scripts/preview.mjs && node --check website/site.js && node --check scripts/site-build.mjs && node --check scripts/site-server.mjs"
+    "workshop:dev": "npx wrangler@4.161.0 pages dev output/site --port 4178",
+    "workshop:verify": "node scripts/verify-workshop-validation.mjs && node scripts/verify-workshop-api.mjs",
+    "workshop:admin": "node scripts/workshop-admin.mjs",
+    "check": "node --check app.js && node --check ocean.js && node --check voyage.js && node --check server.mjs && node --check scripts/preview.mjs && node --check website/site.js && node --check scripts/site-build.mjs && node --check scripts/site-server.mjs && node --check website/workshop/workshop.js && node --check website/workshop/preview.js && node --check workshop/api.mjs && node --check workshop/validation.mjs && node --check workshop/zip.mjs && node --check scripts/workshop-admin.mjs"
   }
 }

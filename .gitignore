@@ -8,6 +8,8 @@ output/
 .env
 .env.*
 !.env.example
+.dev.vars
+.dev.vars.*
 
 # Early reference-image extracts stay local.
 assets/coast.webp

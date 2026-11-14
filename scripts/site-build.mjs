@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { copyFile, cp, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { copyFile, cp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -12,15 +12,22 @@ export async function buildSite() {
   const filename = `WhereFile-v${version}-Setup-x64.exe`;
   const externalUrl = process.env.WHEREFILE_DOWNLOAD_URL;
   const download = { version, url: externalUrl || `downloads/${filename}`, size: null, sha256: null, verified: false };
+  let installer;
 
   await stat(path.join(source, 'index.html'));
   if (externalUrl) {
     if (new URL(externalUrl).protocol !== 'https:') throw new Error('WHEREFILE_DOWNLOAD_URL must use HTTPS.');
   } else {
-    const installer = await readFile(path.join(root, 'output/installer', filename));
+    installer = await readFile(path.join(root, 'output/installer', filename));
     download.size = installer.length;
     download.sha256 = createHash('sha256').update(installer).digest('hex');
     download.verified = true;
+  }
+  // Rebuild only this generated directory so retired files cannot remain public.
+  if (output !== path.join(root, 'output', 'site')) throw new Error('Unexpected website output directory.');
+  await rm(output, { recursive: true, force: true });
+  await mkdir(output, { recursive: true });
+  if (installer) {
     await mkdir(path.join(output, 'downloads'), { recursive: true });
     await writeFile(path.join(output, 'downloads', filename), installer);
     await writeFile(path.join(output, 'downloads/SHA256SUMS.txt'), `${download.sha256}  ${filename}\n`);

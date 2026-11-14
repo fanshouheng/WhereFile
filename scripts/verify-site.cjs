@@ -25,6 +25,13 @@ const { pathToFileURL } = require('node:url');
   try {
     assert.equal((await request('/')).status, 200);
     assert.equal((await request('/assets/coast-hd.webp')).status, 200);
+    for (const [file, mime] of [['index.html', 'text/html'], ['workshop.css', 'text/css'], ['workshop.js', 'text/javascript'], ['preview.js', 'text/javascript']]) {
+      const response = await request('/workshop/' + file);
+      assert.equal(response.status, 200, file);
+      assert.ok(response.headers['content-type'].startsWith(mime), file);
+      assert.ok(response.body.equals(await fs.readFile(path.join(root, 'website/workshop', file))), `Stale workshop resource: ${file}`);
+    }
+    assert.match((await request('/')).body.toString(), /href="\/workshop\/"/);
     for (const [file, mime] of [['index.html', 'text/html'], ['grassland.css', 'text/css'],
       ['grassland.js', 'text/javascript'], ['assets/grassland.webp', 'image/webp'], ['assets/sheep.png', 'image/png']]) {
       const response = await request('/previews/grassland/' + file);
@@ -62,6 +69,7 @@ const { pathToFileURL } = require('node:url');
       console.log('PASS: external download is explicitly unverified; no borrowed size or checksum.');
     }
     for (const urlPath of ['/.local/ppdog-key.xml', '/.git/config', '/package.json', '/scripts/site-build.mjs',
+      '/workshop/schema.sql', '/workshop/api.mjs', '/.dev.vars', '/functions/api/workshop/anything.js',
       '/../installer/SHA256SUMS.txt', '/%2e%2e/installer/SHA256SUMS.txt', '/assets/%2e%2e%5c%2e%2e%5c.local%5cppdog-key.xml', '/missing.html']) {
       assert.equal((await request(urlPath)).status, 404, urlPath);
     }

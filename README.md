@@ -56,13 +56,19 @@ Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈，
 npm run site
 ```
 
-打开 [http://127.0.0.1:4177](http://127.0.0.1:4177)。中文官网包含文件变船互动示意、三套正式风景、六套标注“尚未上线”的主题预览、功能与常见问题，以及 0.1.3 安装包的直接下载。网站源在 `website/`，构建与预览独立于正式软件和设计预览。
+打开 [http://127.0.0.1:4177](http://127.0.0.1:4177)。中文官网包含文件变船互动示意、三套正式风景、七套标注“尚未上线”的主题预览、功能与常见问题，以及 0.1.3 安装包的直接下载。网站源在 `website/`，构建与预览独立于正式软件和设计预览。
 
 先执行 `desktop/build-installer.ps1` 准备当前版本安装包，再执行 `npm run site:build`。构建输出为 `output/site`，只包含官网资源、正式素材与安装包；`download.json` 的版本来自 `package.json`，文件大小和 SHA256 来自实际安装包。`npm run site:verify` 会验证完整下载、响应头、哈希及路径隔离。
 
 Cloudflare Pages 项目为 `wherefile`，配置在 `wrangler.jsonc`。更新时先构建安装包和官网，再执行 `npx wrangler@4.161.0 pages deploy output/site --project-name wherefile --branch master` 上传完整目录。这不是 Git 自动构建：安装包在本地生成，不在仓库中，云端只运行 `npm run site:build` 会缺少安装包而失败。也可以设置 `WHEREFILE_DOWNLOAD_URL` 为已发布的 HTTPS 下载地址后构建；外部文件的大小、哈希与可用性不会冒充已验证。
 
 官网已于 2026-11-13 上线至 [https://wherefile.soul.中国/](https://wherefile.soul.中国/)，备用地址为 [https://wherefile-865.pages.dev/](https://wherefile-865.pages.dev/)。自定义域名的 DNS 和 HTTPS 已激活；公网桌面及手机布局、六套主题预览和真实安装包下载已验证，下载 SHA256 与本地安装包一致。详细证据见 [桌面验证记录](docs/desktop-verification.md)。
+
+## 创意工坊
+
+官网上传背景和透明物件、设置运动并即时预览，人工审核后公开预览及下载主题包。支持投稿回执、管理员审核/撤下和问题反馈。当前 Windows 版暂不支持导入工坊主题包。
+
+代码与本地完整流程已验证，等待 Cloudflare 账号启用 R2 后部署。运行、审核及准确发布状态见 [创意工坊](docs/workshop.md)。`npm run workshop:dev` 使用 4178，提供真实本地 D1/R2 存储；4177 仍是纯静态官网预览。
 
 ## 主界面设计预览
 

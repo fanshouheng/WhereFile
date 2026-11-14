@@ -6,3 +6,6 @@
 /downloads/*.exe
   Content-Type: application/octet-stream
   Content-Disposition: attachment
+/workshop/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
+  Referrer-Policy: no-referrer

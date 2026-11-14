@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f8f7">
+  <meta name="description" content="在 WhereFile 创意工坊分享你制作的动态壁纸主题，预览和下载大家的风景。">
+  <title>创意工坊 — WhereFile</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/site.css">
+  <link rel="stylesheet" href="./workshop.css">
+  <script type="module" src="./workshop.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header workshop-header">
+    <a class="brand" href="/" aria-label="WhereFile 首页"><svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M19 6v23H7L19 6Z" fill="currentColor"/><path d="m22 11 11 18H22V11Z" fill="currentColor" opacity=".45"/><path d="M5 32c4 4 8 4 12 1 4 3 8 3 12 0 2 1 4 1 6 0" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg><span>WhereFile</span></a>
+    <nav aria-label="主导航"><a href="/">官网</a><a href="/workshop/" aria-current="page">创意工坊</a><a class="button button-small" href="?submit">上传主题</a></nav>
+  </header>
+  <main class="workshop-main content-width" id="main"><p class="page-loading" role="status">正在打开创意工坊…</p></main>
+  <footer class="workshop-footer content-width"><a href="/">WhereFile</a><span>每一片风景，都有人用心制作。</span><a href="/#download">下载 Windows 版</a></footer>
+
+  <template id="gallery-template">
+    <section class="workshop-intro">
+      <div><h1>创意工坊</h1><p>做一片自己的风景，<br>把它分享给更多人。</p><a class="button" href="?submit">上传我的主题</a></div>
+      <div class="intro-landscape" aria-hidden="true"><img src="/assets/coast-hd.webp" alt="" width="1672" height="941"><img class="intro-boat" src="/assets/boat-hd.png" alt="" width="112" height="112"></div>
+    </section>
+    <section class="community-section" aria-labelledby="community-title"><div class="workshop-section-heading"><h2 id="community-title">大家的风景</h2><p>主题审核通过后，会展示在这里。</p></div><p id="gallery-status" class="muted" role="status">正在读取主题…</p><div class="theme-gallery" id="theme-gallery"></div><div id="recent-submissions"></div></section>
+  </template>
+
+  <template id="submit-template">
+    <div class="page-heading"><a class="back-link" href="/workshop/">返回工坊</a><h1>分享你的主题</h1><p>一张背景、一个透明物件，就能让风景动起来。</p></div>
+    <div class="creator-layout">
+      <form id="theme-form" class="theme-form">
+        <div class="field"><label for="title">主题名称</label><input id="title" name="title" maxlength="60" placeholder="给这片风景起个名字" required></div>
+        <div class="field"><label for="author">作者昵称</label><input id="author" name="author" maxlength="40" autocomplete="nickname" required></div>
+        <div class="upload-fields">
+          <div class="field file-field"><label for="background">背景图片</label><input id="background" name="background" type="file" accept="image/png,image/jpeg,image/webp" required><small>PNG、JPG 或 WebP，至少 640 × 360，最长边不超过 4096，8 MB 以内。</small></div>
+          <div class="field file-field"><label for="sprite">透明物件</label><input id="sprite" name="sprite" type="file" accept="image/png" required><small>透明 PNG，32–2048 像素，2 MB 以内。</small></div>
+        </div>
+        <div class="motion-settings"><div class="field"><label for="motion">怎么动</label><select id="motion" name="motion"><option value="float">保持直立</option><option value="heading">朝向前方</option><option value="spin">缓慢旋转</option><option value="sway">轻轻摇摆</option></select></div><div class="field"><label for="object-scale">物件大小 <output id="scale-value">9%</output></label><input id="object-scale" type="range" min="4" max="20" step="1" value="9"></div><div class="field"><label for="duration">漂流一圈 <output id="duration-value">48 秒</output></label><input id="duration" type="range" min="10" max="180" step="1" value="48"></div></div>
+        <div class="field" id="forward-field" hidden><label for="forward">素材原本朝向（角度）</label><input id="forward" type="number" min="0" max="359" step="1" value="0"><small>向右为 0°，向下为 90°。</small></div>
+        <details class="region-settings"><summary>调整活动范围</summary><div class="region-inputs"><div class="field"><label for="region-left">左侧 %</label><input id="region-left" type="number" min="0" max="95" step="1" value="10" required></div><div class="field"><label for="region-top">顶部 %</label><input id="region-top" type="number" min="0" max="95" step="1" value="20" required></div><div class="field"><label for="region-right">右侧 %</label><input id="region-right" type="number" min="5" max="100" step="1" value="90" required></div><div class="field"><label for="region-bottom">底部 %</label><input id="region-bottom" type="number" min="5" max="100" step="1" value="90" required></div></div><label class="check-line"><input id="show-region" type="checkbox">在预览中显示范围</label></details>
+        <div class="field"><label for="description">主题介绍 <span class="optional">选填</span></label><textarea id="description" name="description" maxlength="600" rows="3" placeholder="关于这片风景，你想说些什么？"></textarea></div>
+        <div class="field"><label for="provenance">素材来源</label><textarea id="provenance" name="provenance" maxlength="600" rows="3" placeholder="例如：本人绘制；使用的生图工具；或已获授权的素材及其来源链接。" required></textarea></div>
+        <label class="check-line rights-line"><input type="checkbox" name="rightsAccepted" id="rights-accepted" required><span>我有权分享这些素材，并同意在工坊公开预览，供他人下载作个人非商业使用。</span></label>
+        <p class="form-note">作品审核后公开。请勿上传私人信息或没有分享权限的素材。我们会保存提交内容、审核记录与用于限制频次的网络标识；昵称和素材来源会随作品公开。</p>
+        <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+        <button class="button submit-theme" type="submit">提交审核</button>
+      </form>
+      <aside class="creator-preview"><div class="preview-heading"><h2>你的风景</h2><button class="text-button" id="preview-pause" type="button" aria-pressed="false" hidden>暂停</button></div><div class="theme-stage" id="upload-preview"><p class="stage-placeholder">选择图片后，在这里预览。</p></div><p class="preview-note">物件上方的文件名为演示。图片只在你点击“提交审核”后上传。</p><p class="compatibility-note">当前 Windows 版暂不支持导入工坊主题包。你可以先在网页预览、下载和分享。</p></aside>
+    </div>
+  </template>
+
+  <template id="detail-template">
+    <a class="back-link" href="/workshop/">返回工坊</a><div class="detail-heading"><div><h1 id="theme-title"></h1><p id="theme-credit" class="muted"></p></div><button class="text-button" id="preview-pause" type="button" aria-pressed="false">暂停预览</button></div>
+    <div class="theme-stage detail-stage" id="detail-preview"></div>
+    <div class="detail-bottom"><div class="theme-story"><p id="theme-description"></p><dl class="theme-facts"><div><dt>素材来源</dt><dd id="theme-provenance"></dd></div><div><dt>使用范围</dt><dd>个人非商业使用。其他用途请另行取得作者授权。</dd></div></dl><details class="report-section"><summary>反馈此主题</summary><form id="report-form"><div class="field"><label for="report-reason">问题说明</label><textarea id="report-reason" name="reason" minlength="10" maxlength="1000" rows="3" placeholder="请描述版权或内容问题，至少 10 字。" required></textarea></div><div class="field"><label for="report-contact">联系方式 <span class="optional">选填，仅管理员可见</span></label><input id="report-contact" name="contact" maxlength="160"></div><p class="form-status" id="report-status" role="status"></p><button type="submit" class="secondary-button">发送反馈</button></form></details></div><aside class="theme-download"><a id="theme-download" class="button" download>下载主题包</a><p>包含背景、透明物件和运动设置。</p><p class="compatibility-note">当前 Windows 版暂不支持导入工坊主题包。</p></aside></div>
+  </template>
+
+  <template id="receipt-template">
+    <a class="back-link" href="/workshop/">返回工坊</a><section class="receipt-panel"><h1 id="receipt-title">提交记录</h1><p id="receipt-status" role="status">正在查询审核状态…</p><p id="receipt-reason" hidden></p><a class="button" id="published-link" hidden>预览已发布的主题</a><div class="receipt-recovery" id="receipt-recovery" hidden><label for="receipt-url">保存此链接，下次可继续查询</label><div class="copy-row"><input id="receipt-url" readonly><button type="button" class="secondary-button" id="copy-receipt">复制链接</button></div><p class="form-note">链接包含查询凭证，请自行保存。近期提交也会保存在本浏览器中。</p></div><button type="button" class="text-button" id="refresh-receipt">刷新状态</button><p id="receipt-message" class="muted" role="status"></p></section>
+  </template>
+
+  <template id="review-template">
+    <div class="page-heading"><a class="back-link" href="/workshop/">返回工坊</a><h1>主题审核</h1></div>
+    <form id="review-login" class="review-login"><div class="field"><label for="review-token">管理员密钥</label><input id="review-token" type="password" autocomplete="off" required></div><button class="button" type="submit">打开审核列表</button><p class="form-note">密钥仅在当前页面使用，不会保存在浏览器。</p></form>
+    <section id="review-workspace" hidden><div class="review-toolbar"><label for="review-filter">查看状态</label><select id="review-filter"><option value="pending">待审核</option><option value="approved">已发布</option><option value="rejected">未通过</option></select><button id="review-refresh" class="text-button" type="button">刷新列表</button><button id="review-logout" class="text-button" type="button">退出</button></div><div class="review-layout"><div id="review-list"></div><article id="review-detail" class="review-detail"></article></div></section><p class="form-status" id="review-status" role="status"></p>
+  </template>
+</body>
+</html>

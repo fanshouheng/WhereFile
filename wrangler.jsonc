@@ -1,5 +1,18 @@
 {
   "name": "wherefile",
   "pages_build_output_dir": "./output/site",
-  "compatibility_date": "2026-11-13"
+  "compatibility_date": "2026-11-13",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wherefile-workshop",
+      "database_id": "f4ef3d40-ff03-4985-b874-601392b02555"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "THEME_ASSETS",
+      "bucket_name": "wherefile-workshop"
+    }
+  ]
 }
