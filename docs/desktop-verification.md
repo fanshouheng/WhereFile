@@ -1,5 +1,11 @@
 # WhereFile 桌面版验证
 
+## 2026-11-24 发布 v0.1.3
+
+- `v0.1.3` 标签指向提交 `5af9929`，GitHub Latest Release 为 [WhereFile v0.1.3](https://github.com/fanshouheng/WhereFile/releases/tag/v0.1.3)。提供单文件安装包（6,191,280 字节，SHA256 `560609275cadacb7359117c064062d411e8456a4e074dd7f0512078d09cae76a`）、免安装 ZIP（2,468,854 字节，SHA256 `ac8398c9e7ae8d2961fcb84732182871b54f992a852e1d4c853ce622ab89199a`）及 SHA256 校验文件。
+- 使用提交 `5af9929` 的桌面源码重新构建两种包。构建脚本和 `verify-desktop-host.ps1 -LayerOnly` 通过；本次没有运行安装器、操作真实桌面图标或重新做 Windows 实机测试。Windows 11 层级修复的通过结论仍来自 2026-11-13 的用户实机反馈。
+- 官网通过 Cloudflare Pages Direct Upload 更新，部署地址为 `https://8b5729ee.wherefile-865.pages.dev`。自定义域名首页和工坊页返回 200，下载清单为 v0.1.3。新部署地址的完整安装包大小及 SHA256 与清单一致；安装器统计路由 HEAD 返回 302，未授权统计查询返回 401 和 `no-store`。
+
 ## 2026-11-14 青青草原 · 狼堡独立预览
 
 - `previews/grassland/` 通过 `npm run preview` 的 `/previews/grassland/` 访问。按用户反馈改为狼堡与草原一体生成，参考用户提供的紫色方塔、粉红尖顶与爪印造型；移除独立城堡贴图，透明点击/收纳区域固定对齐背景，地图在窄屏也完整显示。小羊为独立透明 PNG，名称移到头顶并随左右朝向换位。

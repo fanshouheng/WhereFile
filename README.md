@@ -28,7 +28,7 @@ npm start
 
 ## Windows 桌面版
 
-在 [官网](https://wherefile.soul.中国/) 下载 0.1.3 Windows x64 单文件安装包，双击 EXE 安装即可。[GitHub Releases](https://github.com/fanshouheng/WhereFile/releases/latest) 目前仍提供 0.1.2 免安装包。
+在 [官网](https://wherefile.soul.中国/) 或 [GitHub Releases](https://github.com/fanshouheng/WhereFile/releases/latest) 下载 v0.1.3 Windows x64 单文件安装包。GitHub Release 也提供免安装 ZIP。
 
 需要 Windows 10/11 x64、.NET Framework 4.6.2+ 和 Microsoft Edge WebView2 Runtime。也可在项目目录自行构建：
 
@@ -46,9 +46,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build-installer.ps1
 
 当前输出为 `output/installer/WhereFile-v0.1.3-Setup-x64.exe`，下载这一个文件即可安装，无需解压。默认安装到 `%LOCALAPPDATA%\Programs\WhereFile`，无需管理员权限；提供开始菜单快捷方式和 Windows 卸载入口，卸载保留本机文件库与设置。缺少 WebView2 时会自动联网安装运行环境。
 
-构建工具仅解包到忽略的 `output/build-deps/installer/`，不安装到系统；首次构建需联网。0.1.3 安装包已通过官网提供下载，尚未上传 GitHub Releases。
+构建工具仅解包到忽略的 `output/build-deps/installer/`，不安装到系统；首次构建需联网。v0.1.3 已发布至官网和 GitHub Releases，Release 同时提供安装包、免安装 ZIP 与 SHA256 校验文件。
 
-Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈，已包含在官网的 0.1.3 安装包中；与 GitHub 0.1.2 的验证及发布差异见 [桌面验证记录](docs/desktop-verification.md)。性能测试条件与适用范围见 [性能验证](docs/performance.md)。
+Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈，已包含在 v0.1.3 安装包中；发布资产与验证边界见 [桌面验证记录](docs/desktop-verification.md)。性能测试条件与适用范围见 [性能验证](docs/performance.md)。
 
 ## 官网与安装包下载
 

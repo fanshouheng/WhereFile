@@ -4,7 +4,7 @@
 
 ## 当前发布状态
 
-2026-11-24 推送与线上复核：本地 `master` 原领先的 17 个提交已推送到 GitHub，推送目标为 `1fcd397`。随后从该版本构建官网并通过 Cloudflare Pages Direct Upload 部署，部署地址为 `https://dfaaf3f9.wherefile-865.pages.dev`。自定义域名首页和 `/workshop/` 均返回 200；`/download.json` 为 0.1.3，大小 6,191,283 字节、SHA256 `47ce1e2035b7b5913daf7755eb134b2fde32908862d73aac3d66e593c9a9cf2a`。安装包统计入口 HEAD 返回禁止缓存的 302，指向 0.1.3 安装包；未授权统计查询返回 401 和 `Cache-Control: no-store`。新部署地址上的完整安装包已重新下载，实际大小和 SHA256 与清单一致。GitHub 最新正式版仍为 v0.1.2；Wrangler 部署列表查询超时，未核对控制台部署 marker。本次未操作本机桌面实例或重复投稿与审核闭环。
+2026-11-24 推送、发布与线上复核：本地 `master` 原领先的 17 个提交已推送到 GitHub，推送目标为 `1fcd397`，其后的部署记录提交 `5af9929` 也已推送。GitHub Latest Release 为 [v0.1.3](https://github.com/fanshouheng/WhereFile/releases/tag/v0.1.3)，提供单文件安装包、免安装 ZIP 和 SHA256 校验文件。官网使用重新构建的 0.1.3 安装包通过 Cloudflare Pages Direct Upload 更新，部署地址为 `https://8b5729ee.wherefile-865.pages.dev`。自定义域名首页和 `/workshop/` 均返回 200；`/download.json` 为 0.1.3，大小 6,191,280 字节、SHA256 `560609275cadacb7359117c064062d411e8456a4e074dd7f0512078d09cae76a`。安装包统计入口 HEAD 返回禁止缓存的 302，指向该安装包；未授权统计查询返回 401 和 `Cache-Control: no-store`。新部署地址上的完整安装包已下载并复算哈希。本次未操作本机桌面实例或重复投稿与审核闭环；Wrangler 部署列表查询超时，未核对控制台部署 marker。
 
 2026-11-14：已使用 Cloudflare KV 免费额度上线工坊及私有下载统计，无需启用 R2 或绑定支付方式。当次部署代码版本为 `ff313e4`，Cloudflare Pages 部署 `https://94ca883d.wherefile-865.pages.dev`，正式入口为 `https://wherefile.soul.中国/workshop/`。本机 Git 的后续文档提交不代表新增部署。
 
