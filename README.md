@@ -28,7 +28,7 @@ npm start
 
 ## Windows 桌面版
 
-在 [官网](https://wherefile.soul.中国/) 或 [GitHub Releases](https://github.com/fanshouheng/WhereFile/releases/latest) 下载 v0.1.3 Windows x64 单文件安装包。GitHub Release 也提供免安装 ZIP。
+在 [官网](https://wherefile.soul.中国/) 或 [GitHub Releases](https://github.com/fanshouheng/WhereFile/releases/latest) 下载 v0.1.4 Windows x64 单文件安装包。GitHub Release 也提供免安装 ZIP。
 
 需要 Windows 10/11 x64、.NET Framework 4.6.2+ 和 Microsoft Edge WebView2 Runtime。也可在项目目录自行构建：
 
@@ -44,11 +44,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File desktop/build-installer.ps1
 ```
 
-当前输出为 `output/installer/WhereFile-v0.1.3-Setup-x64.exe`，下载这一个文件即可安装，无需解压。默认安装到 `%LOCALAPPDATA%\Programs\WhereFile`，无需管理员权限；提供开始菜单快捷方式和 Windows 卸载入口，卸载保留本机文件库与设置。缺少 WebView2 时会自动联网安装运行环境。
+当前输出为 `output/installer/WhereFile-v0.1.4-Setup-x64.exe`，下载这一个文件即可安装，无需解压。默认安装到 `%LOCALAPPDATA%\Programs\WhereFile`，无需管理员权限；提供开始菜单快捷方式和 Windows 卸载入口，卸载保留本机文件库与设置。缺少 WebView2 时会自动联网安装运行环境。
 
-构建工具仅解包到忽略的 `output/build-deps/installer/`，不安装到系统；首次构建需联网。v0.1.3 已发布至官网和 GitHub Releases，Release 同时提供安装包、免安装 ZIP 与 SHA256 校验文件。
+构建工具仅解包到忽略的 `output/build-deps/installer/`，不安装到系统；首次构建需联网。v0.1.4 在修复桌面文件连续导入卡死后发布至官网和 GitHub Releases。
 
-Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈，已包含在 v0.1.3 安装包中；发布资产与验证边界见 [桌面验证记录](docs/desktop-verification.md)。性能测试条件与适用范围见 [性能验证](docs/performance.md)。
+Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈，已包含在 v0.1.4 安装包中；发布资产与验证边界见 [桌面验证记录](docs/desktop-verification.md)。性能测试条件与适用范围见 [性能验证](docs/performance.md)。
 
 ## 官网与安装包下载
 
@@ -56,7 +56,7 @@ Windows 11 桌面层级兼容修复已收到用户实机测试通过的反馈，
 npm run site
 ```
 
-打开 [http://127.0.0.1:4177](http://127.0.0.1:4177)。中文官网包含文件变船互动示意、三套正式风景、七套标注“尚未上线”的主题预览、功能与常见问题，以及 0.1.3 安装包的直接下载。网站源在 `website/`，构建与预览独立于正式软件和设计预览。
+打开 [http://127.0.0.1:4177](http://127.0.0.1:4177)。中文官网包含文件变船互动示意、三套正式风景、七套标注“尚未上线”的主题预览、功能与常见问题，以及 0.1.4 安装包的直接下载。网站源在 `website/`，构建与预览独立于正式软件和设计预览。
 
 先执行 `desktop/build-installer.ps1` 准备当前版本安装包，再执行 `npm run site:build`。构建输出为 `output/site`，只包含官网资源、正式素材与安装包；`download.json` 的版本来自 `package.json`，文件大小和 SHA256 来自实际安装包。`npm run site:verify` 会验证完整下载、响应头、哈希及路径隔离。
 

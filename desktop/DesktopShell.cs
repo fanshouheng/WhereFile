@@ -52,6 +52,25 @@ sealed class DesktopShell : IDisposable
         }
         return result;
     }
+    internal DesktopEntry ReadEntry(string path)
+    {
+        int count; Marshal.ThrowExceptionForHR(folder.ItemCount(2, out count));
+        for(int i=0;i<count;i++) {
+            IntPtr pidl; if(folder.Item(i,out pidl)!=0) continue;
+            try {
+                Native.POINT point; if(folder.GetItemPosition(pidl,out point)!=0) continue;
+                IntPtr text; if(SHGetNameFromIDList(pidl,0x80058000u,out text)!=0) continue;
+                string current; try { current=Marshal.PtrToStringUni(text); } finally { Marshal.FreeCoTaskMem(text); }
+                if(String.IsNullOrEmpty(current)||(!File.Exists(current)&&!Directory.Exists(current))||!String.Equals(current,path,StringComparison.OrdinalIgnoreCase)) continue;
+                string name=Path.GetFileName(current);
+                if(SHGetNameFromIDList(pidl,0,out text)==0){try{name=Marshal.PtrToStringUni(text);}finally{Marshal.FreeCoTaskMem(text);}}
+                var screen=point; ClientToScreen(ViewHandle,ref screen);
+                var rect=mask.Bounds(i);
+                return new DesktopEntry { Path=current,Name=name,Left=rect.Left,Top=rect.Top,Width=rect.Width,Height=rect.Height,X=point.X,Y=point.Y,ScreenX=screen.X+32,ScreenY=screen.Y+32 };
+            } finally { Marshal.FreeCoTaskMem(pidl); }
+        }
+        return null;
+    }
     internal bool Move(string path,int x,int y)
     {
         int count;if(folder.ItemCount(2,out count)!=0)return false;
@@ -70,7 +89,11 @@ sealed class DesktopShell : IDisposable
         }
         return false;
     }
-    internal bool Hide(DesktopEntry entry){var current=Read().Find(e=>String.Equals(e.Path,entry.Path,StringComparison.OrdinalIgnoreCase));return current!=null&&mask.Hide(entry.Path,new Rectangle(current.Left,current.Top,current.Width,current.Height));}
+    internal bool Hide(DesktopEntry entry,DesktopEntry current)
+    {
+        if(entry==null||current==null||!String.Equals(entry.Path,current.Path,StringComparison.OrdinalIgnoreCase)||current.Width<=0||current.Height<=0)return false;
+        return mask.Hide(entry.Path,new Rectangle(current.Left,current.Top,current.Width,current.Height));
+    }
     internal bool IsHidden(DesktopEntry entry){return mask.IsMasked(new Rectangle(entry.Left,entry.Top,entry.Width,entry.Height));}
     internal void ClearMask(){mask.ClearRecovery();}
     internal bool Restore(DesktopEntry entry){mask.Restore(entry.Path);return Move(entry.Path,entry.X,entry.Y);}
@@ -82,14 +105,41 @@ sealed class DesktopShell : IDisposable
 sealed class DesktopScanner : IDisposable
 {
     internal sealed class Snapshot { internal List<DesktopEntry> Entries;internal bool AutoArrange; }
-    readonly BlockingCollection<TaskCompletionSource<Snapshot>> requests=new BlockingCollection<TaskCompletionSource<Snapshot>>();
+    sealed class Request
+    {
+        readonly string path;
+        readonly TaskCompletionSource<Snapshot> snapshot;
+        readonly TaskCompletionSource<DesktopEntry> entry;
+        internal Task<Snapshot> SnapshotTask { get { return snapshot==null?null:snapshot.Task; } }
+        internal Task<DesktopEntry> EntryTask { get { return entry==null?null:entry.Task; } }
+        internal static Request ForSnapshot(){return new Request(null,true);}
+        internal static Request ForEntry(string path){return new Request(path,false);}
+        Request(string targetPath,bool positionsOnly)
+        {
+            path=targetPath;
+            if(positionsOnly)snapshot=new TaskCompletionSource<Snapshot>();
+            else entry=new TaskCompletionSource<DesktopEntry>();
+        }
+        internal void Complete(DesktopShell reader)
+        {
+            if(snapshot!=null)snapshot.SetResult(new Snapshot{Entries=reader.Read(true),AutoArrange=reader.AutoArrange});
+            else entry.SetResult(reader.ReadEntry(path));
+        }
+        internal void Fail(Exception error)
+        {
+            if(snapshot!=null)snapshot.SetException(error);
+            else entry.SetException(error);
+        }
+    }
+    readonly BlockingCollection<Request> requests=new BlockingCollection<Request>();
     internal DesktopScanner(){var thread=new Thread(Run){IsBackground=true,Name="WhereFile desktop scan"};thread.SetApartmentState(ApartmentState.STA);thread.Start();}
-    internal Task<Snapshot> Read(){var request=new TaskCompletionSource<Snapshot>();requests.Add(request);return request.Task;}
+    internal Task<Snapshot> Read(){var request=Request.ForSnapshot();requests.Add(request);return request.SnapshotTask;}
+    internal Task<DesktopEntry> ReadEntry(string path){var request=Request.ForEntry(path);requests.Add(request);return request.EntryTask;}
     void Run(){
         DesktopShell reader=null;
         try{foreach(var request in requests.GetConsumingEnumerable()){
-            try{if(reader==null)reader=new DesktopShell();request.SetResult(new Snapshot{Entries=reader.Read(true),AutoArrange=reader.AutoArrange});}
-            catch(Exception error){request.SetException(error);}
+            try{if(reader==null)reader=new DesktopShell();request.Complete(reader);}
+            catch(Exception error){request.Fail(error);}
         }}finally{if(reader!=null)reader.Dispose();requests.Dispose();}
     }
     public void Dispose(){requests.CompleteAdding();}

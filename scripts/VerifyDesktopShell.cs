@@ -22,7 +22,7 @@ static class DesktopShellTest
                 File.WriteAllText(path,"Haiyu temporary integration fixture");
                 for(int i=0;i<30&&original==null;i++){Thread.Sleep(100);original=shell.Read().FirstOrDefault(e=>e.Path==path);}
                 if(original==null)throw new Exception("Explorer did not enumerate the temporary fixture.");
-                if(!shell.Hide(original))throw new Exception("Hide API failed.");
+                if(!shell.Hide(original,original))throw new Exception("Hide API failed.");
                 Thread.Sleep(300);
                 if(!shell.IsHidden(original))throw new Exception("Explorer still displays the icon.");
                 if(!shell.Restore(original))throw new Exception("Restore API failed.");

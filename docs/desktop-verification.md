@@ -1,5 +1,13 @@
 # WhereFile 桌面版验证
 
+## 2026-11-26 修复桌面文件连续导入卡死 · v0.1.4
+
+- Windows Application Hang 记录显示，五次桌面图标移动后 `WhereFile.exe` 主窗口出现 `AppHangB1`。挂起实例来自旧的 `output/installer-smoke-20261113-151455/WhereFile/WhereFile.exe`。原实现对每个移动图标同步遍历 Explorer 图标并查询图标区域，调用发生在 WinForms/WebView2 界面线程。
+- 轮询基线、逐个图标详情及捕获前的当前区域现通过后台 STA `DesktopScanner` 队列读取。界面线程只处理已返回的数据并更新遮罩；`npm run check` 增加回归门禁，禁止桌面消息路径重新同步扫描。
+- `npm run check`、`npm run workshop:verify`、`npm run site:verify`、`verify-desktop-host.ps1 -LayerOnly` 通过。Shell 集成测试已编译，但没有运行会实际移动或隐藏桌面图标的测试；本次没有重做五文件 Windows 实机验收。
+- v0.1.4 安装包为 6,192,011 字节，SHA256 `f79e9e7fd902fc3973ffe20a46f9e063aec7d6b167770006b1e8ae940da025f0`。免安装 ZIP 为 2,470,772 字节，SHA256 `23e01197e38f1a92d0ddb6e5f10b62bddcd7aa2771663968e237dd3890ece51a`。
+- 本机注册安装已更新为 v0.1.4，安装目录 19 个程序文件均与当前构建逐文件哈希一致，`%LOCALAPPDATA%\HaiyuWallpaper` 数据目录保留。应用未自动启动。
+
 ## 2026-11-24 发布 v0.1.3
 
 - `v0.1.3` 标签指向提交 `5af9929`，GitHub Latest Release 为 [WhereFile v0.1.3](https://github.com/fanshouheng/WhereFile/releases/tag/v0.1.3)。提供单文件安装包（6,191,280 字节，SHA256 `560609275cadacb7359117c064062d411e8456a4e074dd7f0512078d09cae76a`）、免安装 ZIP（2,468,854 字节，SHA256 `ac8398c9e7ae8d2961fcb84732182871b54f992a852e1d4c853ce622ab89199a`）及 SHA256 校验文件。

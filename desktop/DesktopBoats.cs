@@ -15,11 +15,12 @@ sealed class DesktopBoats : IDisposable
     DesktopShell shell;
     readonly Dictionary<string,DesktopEntry> hidden=new Dictionary<string,DesktopEntry>(StringComparer.OrdinalIgnoreCase);
     Dictionary<string,DesktopEntry> previous=new Dictionary<string,DesktopEntry>(StringComparer.OrdinalIgnoreCase);
-    readonly Dictionary<string,DesktopEntry> pending=new Dictionary<string,DesktopEntry>();
+    sealed class PendingMove { internal DesktopEntry Original;internal bool Capturing; }
+    readonly Dictionary<string,PendingMove> pending=new Dictionary<string,PendingMove>();
     readonly Dictionary<string,BoatWindow> boats=new Dictionary<string,BoatWindow>();
     readonly Timer timer=new Timer();
     readonly DesktopScanner scanner=new DesktopScanner();
-    bool warned,active,scanning,disposed;int pollCount,modeVersion;
+    bool warned,active,scanning,baselinePending,disposed;int pollCount,modeVersion;
     internal static string Journal { get { return Path.Combine(Program.DataDirectory,"desktop-icons.json"); } }
     internal DesktopBoats(IslandWindow target,Action<string> message)
     {
@@ -39,15 +40,23 @@ sealed class DesktopBoats : IDisposable
         if(remaining.Count>0)throw new IOException("部分桌面图标待恢复，请退出 WhereFile 后重试。");
     }
     void Save(){string temp=Journal+".tmp";File.WriteAllText(temp,Program.Json.Serialize(hidden.Values.ToArray()));if(File.Exists(Journal))File.Replace(temp,Journal,null);else File.Move(temp,Journal);}
-    internal void SetMode(bool wallpaper)
+    internal async void SetMode(bool wallpaper)
     {
         active=wallpaper;modeVersion++;previous.Clear();pending.Clear();
-        if(wallpaper&&shell!=null)try{previous=shell.Read().ToDictionary(e=>e.Path,StringComparer.OrdinalIgnoreCase);}catch(Exception e){Program.Log("Desktop baseline: "+e.Message);}
+        int version=modeVersion;
         foreach(var boat in boats.Values)boat.Visible=wallpaper;
+        baselinePending=wallpaper&&shell!=null;
+        if(!baselinePending)return;
+        try{
+            var snapshot=await scanner.Read();
+            if(disposed||!active||version!=modeVersion)return;
+            previous=snapshot.Entries.ToDictionary(e=>e.Path,StringComparer.OrdinalIgnoreCase);
+        }catch(Exception e){if(!disposed&&version==modeVersion)Program.Log("Desktop baseline: "+e.Message);}
+        finally{if(version==modeVersion)baselinePending=false;}
     }
     async void Poll()
     {
-        if(shell==null||!active||!window.Ready||window.Suspended||scanning||disposed)return;
+        if(shell==null||!active||!window.Ready||window.Suspended||scanning||baselinePending||disposed)return;
         // Explorer commits icon positions after mouse-up, sometimes in a later tick.
         // Compare stable Shell positions; foreground windows and mouse polling are not drag evidence.
         if((Control.MouseButtons&MouseButtons.Left)!=0)return;
@@ -62,11 +71,19 @@ sealed class DesktopBoats : IDisposable
             foreach(var entry in entries){
                 DesktopEntry old;
                 bool moved=previous.TryGetValue(entry.Path,out old)&&(old.X!=entry.X||old.Y!=entry.Y);
-                if(hidden.ContainsKey(entry.Path)){if(moved)shell.Hide(entry);continue;}
+                if(hidden.ContainsKey(entry.Path)){
+                    if(moved){
+                        var current=await scanner.ReadEntry(entry.Path);
+                        if(disposed||!active||version!=modeVersion)return;
+                        if(current!=null)shell.Hide(hidden[entry.Path],current);
+                    }
+                    continue;
+                }
                 if(moved){
-                    var current=shell.Read().Find(e=>String.Equals(e.Path,entry.Path,StringComparison.OrdinalIgnoreCase));
+                    var current=await scanner.ReadEntry(entry.Path);
+                    if(disposed||!active||version!=modeVersion)return;
                     if(current==null)continue;
-                    entry.Id=Guid.NewGuid().ToString("N");pending[entry.Id]=old;old.Id=entry.Id;
+                    entry.Id=Guid.NewGuid().ToString("N");pending[entry.Id]=new PendingMove{Original=old};old.Id=entry.Id;
                     Rectangle area=Screen.PrimaryScreen.Bounds;
                     old.Name=current.Name;
                     window.Post(new{type="desktop-moved",id=entry.Id,name=current.Name,x=current.ScreenX-area.X,y=current.ScreenY-area.Y});
@@ -86,14 +103,7 @@ sealed class DesktopBoats : IDisposable
         }
         string id=Convert.ToString(data["id"]);
         if(type=="desktop-capture"){
-            DesktopEntry entry;if(!active||!pending.TryGetValue(id,out entry))return;pending.Remove(id);
-            if(hidden.ContainsKey(entry.Path))return;
-            hidden[entry.Path]=entry;Save();
-            if(!shell.Hide(entry)){hidden.Remove(entry.Path);Save();notice("当前桌面未允许隐藏这个图标。");return;}
-            BoatWindow boat;
-            try{boat=new BoatWindow(entry,window,shell.ViewHandle);}catch{shell.Restore(entry);hidden.Remove(entry.Path);Save();throw;}
-            boats[id]=boat;
-            window.Post(new{type="desktop-added",id=id,name=entry.Name,x=data["x"],y=data["y"]});
+            Capture(id,data);return;
         }else if(type=="desktop-ignore")pending.Remove(id);
         else {
             var entry=hidden.Values.FirstOrDefault(e=>e.Id==id);if(entry==null)return;
@@ -103,6 +113,43 @@ sealed class DesktopBoats : IDisposable
                 if(shell.Restore(entry)){hidden.Remove(entry.Path);Save();BoatWindow boat;if(boats.TryGetValue(id,out boat)){boats.Remove(id);boat.Dispose();}window.Post(new{type="desktop-removed",id=id});previous.Clear();}
                 else notice("暂时无法恢复图标，请退出后重新启动 WhereFile 重试。");
             }
+        }
+    }
+    async void Capture(string id,Dictionary<string,object> data)
+    {
+        PendingMove move;
+        if(!active||!pending.TryGetValue(id,out move)||move.Capturing)return;
+        move.Capturing=true;
+        int version=modeVersion;
+        DesktopEntry entry=move.Original;
+        BoatWindow boat=null;
+        bool journaled=false,masked=false;
+        try{
+            var current=await scanner.ReadEntry(entry.Path);
+            if(disposed||!active||version!=modeVersion)return;
+            PendingMove latest;
+            if(!pending.TryGetValue(id,out latest)||!Object.ReferenceEquals(move,latest))return;
+            if(current==null){pending.Remove(id);notice("原桌面图标已不存在，未将文件放入海中。");return;}
+            pending.Remove(id);
+            if(hidden.ContainsKey(entry.Path))return;
+            hidden[entry.Path]=entry;Save();journaled=true;
+            if(!shell.Hide(entry,current)){
+                hidden.Remove(entry.Path);Save();journaled=false;
+                notice("当前桌面未允许隐藏这个图标。");return;
+            }
+            masked=true;
+            boat=new BoatWindow(entry,window,shell.ViewHandle);
+            boats[id]=boat;
+            window.Post(new{type="desktop-added",id=id,name=entry.Name,x=data["x"],y=data["y"]});
+        }catch(Exception error){
+            if(boat!=null){boats.Remove(id);boat.Dispose();}
+            if(masked)try{shell.Restore(entry);}catch(Exception restoreError){Program.Log("Desktop capture rollback: "+restoreError);}
+            bool removed=hidden.Remove(entry.Path);
+            if(removed||journaled)try{Save();}catch(Exception saveError){Program.Log("Desktop capture journal rollback: "+saveError);}
+            PendingMove latest;
+            if(pending.TryGetValue(id,out latest)&&Object.ReferenceEquals(move,latest))pending.Remove(id);
+            Program.Log("Desktop capture failed: "+error);
+            if(!disposed)notice("无法放入这个桌面文件，原图标已保留。");
         }
     }
     public void Dispose(){disposed=true;scanner.Dispose();timer.Stop();timer.Dispose();foreach(var boat in boats.Values)boat.Dispose();if(shell!=null){try{Recover(shell);}catch(Exception e){Program.Log("Restore icons: "+e.Message);}shell.Dispose();}}
